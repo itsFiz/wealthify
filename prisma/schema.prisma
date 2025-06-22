@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// User & Authentication
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // NextAuth relations
+  accounts Account[]
+  sessions Session[]
+  
+  // Relations
+  incomeStreams IncomeStream[]
+  expenses      Expense[]
+  goals         Goal[]
+  budgets       Budget[]
+  
+  @@map("users")
+}
+
+// Income Streams
+model IncomeStream {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String   // e.g., "Full-time Salary", "Startup Revenue"
+  type        IncomeType
+  expectedMonthly Decimal
+  actualMonthly   Decimal?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id])
+  entries     IncomeEntry[]
+  
+  @@map("income_streams")
+}
+
+model IncomeEntry {
+  id              String   @id @default(cuid())
+  incomeStreamId  String
+  amount          Decimal
+  month           DateTime
+  notes           String?
+  createdAt       DateTime @default(now())
+  
+  incomeStream    IncomeStream @relation(fields: [incomeStreamId], references: [id])
+  
+  @@map("income_entries")
+}
+
+// Expenses & Burn Tracking
+model Expense {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  category    ExpenseCategory
+  type        ExpenseType // FIXED, VARIABLE, STARTUP_BURN
+  amount      Decimal
+  frequency   Frequency // MONTHLY, WEEKLY, ONE_TIME
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id])
+  entries     ExpenseEntry[]
+  
+  @@map("expenses")
+}
+
+model ExpenseEntry {
+  id         String   @id @default(cuid())
+  expenseId  String
+  amount     Decimal
+  month      DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+  
+  expense    Expense  @relation(fields: [expenseId], references: [id])
+  
+  @@map("expense_entries")
+}
+
+// Goals & Milestones
+model Goal {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String   // e.g., "GT86 Purchase", "House Down Payment"
+  description     String?
+  targetAmount    Decimal
+  currentAmount   Decimal  @default(0)
+  targetDate      DateTime
+  priority        Int      @default(1)
+  category        GoalCategory
+  isCompleted     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id])
+  contributions   GoalContribution[]
+  
+  @@map("goals")
+}
+
+model GoalContribution {
+  id        String   @id @default(cuid())
+  goalId    String
+  amount    Decimal
+  month     DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  
+  goal      Goal     @relation(fields: [goalId], references: [id])
+  
+  @@map("goal_contributions")
+}
+
+// Budget Planning
+model Budget {
+  id              String   @id @default(cuid())
+  userId          String
+  month           DateTime
+  totalIncome     Decimal
+  totalExpenses   Decimal
+  totalSavings    Decimal
+  burnRate        Decimal  // Percentage
+  healthScore     Int      // 1-100
+  createdAt       DateTime @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@map("budgets")
+}
+
+// Enums
+enum IncomeType {
+  SALARY
+  BUSINESS
+  FREELANCE
+  INVESTMENT
+  PASSIVE
+  OTHER
+}
+
+enum ExpenseCategory {
+  HOUSING
+  TRANSPORTATION
+  FOOD
+  UTILITIES
+  ENTERTAINMENT
+  HEALTHCARE
+  BUSINESS
+  PERSONAL
+  OTHER
+}
+
+enum ExpenseType {
+  FIXED
+  VARIABLE
+  STARTUP_BURN
+}
+
+enum Frequency {
+  MONTHLY
+  WEEKLY
+  YEARLY
+  ONE_TIME
+}
+
+enum GoalCategory {
+  EMERGENCY_FUND
+  DEBT_PAYOFF
+  PROPERTY
+  VEHICLE
+  INVESTMENT
+  VACATION
+  BUSINESS
+  OTHER
+} 
