@@ -1,30 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Wallet, ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const message = searchParams.get('message');
-  
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
       const result = await signIn('google', {
@@ -36,7 +36,7 @@ export default function SignInPage() {
         router.push('/dashboard');
       }
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('Sign up error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +44,10 @@ export default function SignInPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -53,6 +57,12 @@ export default function SignInPage() {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
@@ -69,8 +79,8 @@ export default function SignInPage() {
     // Simulate API call for now
     setTimeout(() => {
       setIsLoading(false);
-      // For now, redirect to dashboard
-      router.push('/dashboard');
+      // For now, redirect to sign in
+      router.push('/auth/signin?message=Account created successfully! Please sign in.');
     }, 2000);
   };
 
@@ -81,6 +91,20 @@ export default function SignInPage() {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
+
+  const getPasswordStrength = (password: string) => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+  };
+
+  const passwordStrength = getPasswordStrength(formData.password);
+  const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
+  const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
@@ -112,8 +136,8 @@ export default function SignInPage() {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-4xl lg:text-5xl font-bold tracking-tight"
             >
-              Welcome Back to{' '}
-              <span className="text-primary">Your</span>{' '}
+              Start Your{' '}
+              <span className="text-primary">Financial</span>{' '}
               <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
                 Journey
               </span>
@@ -125,8 +149,8 @@ export default function SignInPage() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-xl text-muted-foreground leading-relaxed"
             >
-              Continue building your financial future with smart goal tracking 
-              and gamified progress monitoring.
+              Join thousands of Malaysians who are turning their financial dreams into reality 
+              with smart goal tracking and gamified progress.
             </motion.p>
           </div>
 
@@ -158,7 +182,7 @@ export default function SignInPage() {
           </motion.div>
         </motion.div>
 
-        {/* Right side - Sign In Form */}
+        {/* Right side - Sign Up Form */}
         <motion.div 
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -167,33 +191,16 @@ export default function SignInPage() {
         >
           <Card className="w-full max-w-md shadow-2xl border-0 bg-background/80 backdrop-blur">
             <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+              <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
               <CardDescription>
-                Sign in to continue your financial journey
+                Get started with your financial transformation
               </CardDescription>
-              
-              {/* Success Message */}
-              <AnimatePresence>
-                {message && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
-                  >
-                    <p className="text-sm text-green-700 dark:text-green-300 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {message}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </CardHeader>
             
             <CardContent className="space-y-6">
-              {/* Google Sign In */}
+              {/* Google Sign Up */}
               <Button 
-                onClick={handleGoogleSignIn}
+                onClick={handleGoogleSignUp}
                 disabled={isLoading}
                 className="w-full h-12 text-base bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 shadow-sm"
                 variant="outline"
@@ -229,13 +236,53 @@ export default function SignInPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with email
+                    Or create with email
                   </span>
                 </div>
               </div>
 
-              {/* Email Sign In Form */}
+              {/* Email Sign Up Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      className={`h-11 ${errors.name ? 'border-red-500' : ''}`}
+                    />
+                    <AnimatePresence>
+                      {formData.name && !errors.name && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <AnimatePresence>
+                    {errors.name && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="text-sm text-red-500 flex items-center"
+                      >
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {errors.name}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
@@ -278,20 +325,12 @@ export default function SignInPage() {
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link 
-                      href="/auth/forgot-password" 
-                      className="text-xs text-primary hover:underline underline-offset-4"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder="Create a strong password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       className={`h-11 pr-10 ${errors.password ? 'border-red-500' : ''}`}
@@ -304,6 +343,33 @@ export default function SignInPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  
+                  {/* Password Strength Indicator */}
+                  <AnimatePresence>
+                    {formData.password && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-2"
+                      >
+                        <div className="flex space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i < passwordStrength ? strengthColors[passwordStrength - 1] : 'bg-gray-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Password strength: {strengthLabels[passwordStrength - 1] || 'Very Weak'}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
                   <AnimatePresence>
                     {errors.password && (
                       <motion.p
@@ -319,6 +385,53 @@ export default function SignInPage() {
                   </AnimatePresence>
                 </div>
 
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      className={`h-11 pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                    <AnimatePresence>
+                      {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          className="absolute right-10 top-1/2 transform -translate-y-1/2"
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <AnimatePresence>
+                    {errors.confirmPassword && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="text-sm text-red-500 flex items-center"
+                      >
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {errors.confirmPassword}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Submit Button */}
                 <Button 
                   type="submit"
@@ -329,28 +442,28 @@ export default function SignInPage() {
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                   ) : (
                     <>
-                      Sign In
+                      Create Account
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </>
                   )}
                 </Button>
               </form>
 
-              {/* Sign Up Link */}
+              {/* Sign In Link */}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Don't have an account?{' '}
+                  Already have an account?{' '}
                   <Link 
-                    href="/auth/signup" 
+                    href="/auth/signin" 
                     className="font-medium text-primary hover:underline underline-offset-4 transition-colors"
                   >
-                    Create one here
+                    Sign in here
                   </Link>
                 </p>
               </div>
               
               <p className="text-xs text-center text-muted-foreground">
-                By signing in, you agree to our{' '}
+                By creating an account, you agree to our{' '}
                 <a href="/terms" className="underline hover:text-primary">Terms of Service</a>{' '}
                 and{' '}
                 <a href="/privacy" className="underline hover:text-primary">Privacy Policy</a>
