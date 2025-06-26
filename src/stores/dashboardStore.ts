@@ -13,8 +13,16 @@ import {
   calculateBurnRate,
   calculateSavingsRate,
   calculateHealthScore,
-  analyzeGoal
-} from '@/lib/calculations';
+  analyzeGoal,
+  calculateRequiredIncome,
+  calculateEmergencyRunway,
+  calculateDebtToIncomeRatio,
+  calculateBurnRateScenarios,
+  calculateIncomeForEmergencyFund,
+  analyzeLifestyleAffordability,
+  calculateEnhancedHealthScore,
+  assessFinancialRisk
+} from '@/lib/calculations/index';
 
 interface DashboardState {
   // Data
@@ -28,6 +36,29 @@ interface DashboardState {
   burnRate: number;
   savingsRate: number;
   healthScore: number;
+  
+  // New lifestyle analysis values
+  requiredIncome: number;
+  emergencyRunwayMonths: number;
+  debtToIncomeRatio: number;
+  burnRateScenarios: {
+    current: number;
+    incomeDown20: number;
+    incomeDown30: number;
+    expensesUp15: number;
+    expensesUp25: number;
+  };
+  lifestyleAffordability: {
+    currentAffordability: 'excellent' | 'good' | 'tight' | 'stressed';
+    monthlyGoalAllocation: number;
+    remainingAfterGoals: number;
+    recommendedIncomeIncrease: number;
+  };
+  financialRisk: {
+    riskLevel: 'low' | 'moderate' | 'high' | 'critical';
+    riskFactors: string[];
+    recommendations: string[];
+  };
   
   // Loading states
   isLoading: boolean;
@@ -51,6 +82,9 @@ interface DashboardState {
   refreshData: () => Promise<void>;
   getDashboardData: () => DashboardData;
   getGoalAnalysis: (goalId: string) => GoalCalculation | null;
+  getLifestyleAnalysis: () => any;
+  getBurnRateAnalysis: () => any;
+  getFinancialRiskAssessment: () => any;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -65,6 +99,27 @@ export const useDashboardStore = create<DashboardState>()(
       burnRate: 0,
       savingsRate: 0,
       healthScore: 0,
+      requiredIncome: 0,
+      emergencyRunwayMonths: 0,
+      debtToIncomeRatio: 0,
+      burnRateScenarios: {
+        current: 0,
+        incomeDown20: 0,
+        incomeDown30: 0,
+        expensesUp15: 0,
+        expensesUp25: 0,
+      },
+      lifestyleAffordability: {
+        currentAffordability: 'excellent',
+        monthlyGoalAllocation: 0,
+        remainingAfterGoals: 0,
+        recommendedIncomeIncrease: 0,
+      },
+      financialRisk: {
+        riskLevel: 'low',
+        riskFactors: [],
+        recommendations: [],
+      },
       isLoading: false,
       error: null,
 
@@ -76,12 +131,32 @@ export const useDashboardStore = create<DashboardState>()(
           const savingsRate = calculateSavingsRate(monthlyIncome, state.monthlyExpenses);
           const healthScore = calculateHealthScore(burnRate, savingsRate);
           
+          // Calculate new lifestyle metrics
+          const requiredIncome = calculateRequiredIncome(state.monthlyExpenses);
+          const emergencyRunwayMonths = calculateEmergencyRunway(monthlyIncome - state.monthlyExpenses, state.monthlyExpenses);
+          const debtToIncomeRatio = calculateDebtToIncomeRatio(0, monthlyIncome); // TODO: Add debt tracking
+          const burnRateScenarios = calculateBurnRateScenarios(monthlyIncome, state.monthlyExpenses);
+          
+          const goalsForAnalysis = state.goals.map(goal => ({
+            targetAmount: goal.targetAmount - goal.currentAmount,
+            monthsToTarget: Math.ceil((new Date(goal.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30))
+          }));
+          
+          const lifestyleAffordability = analyzeLifestyleAffordability(monthlyIncome, state.monthlyExpenses, goalsForAnalysis);
+          const financialRisk = assessFinancialRisk(burnRate, emergencyRunwayMonths, debtToIncomeRatio, streams.length);
+          
           return {
             incomeStreams: streams,
             monthlyIncome,
             burnRate,
             savingsRate,
             healthScore,
+            requiredIncome,
+            emergencyRunwayMonths,
+            debtToIncomeRatio,
+            burnRateScenarios,
+            lifestyleAffordability,
+            financialRisk,
           };
         });
       },
@@ -93,12 +168,32 @@ export const useDashboardStore = create<DashboardState>()(
           const savingsRate = calculateSavingsRate(state.monthlyIncome, monthlyExpenses);
           const healthScore = calculateHealthScore(burnRate, savingsRate);
           
+          // Calculate new lifestyle metrics
+          const requiredIncome = calculateRequiredIncome(monthlyExpenses);
+          const emergencyRunwayMonths = calculateEmergencyRunway(state.monthlyIncome - monthlyExpenses, monthlyExpenses);
+          const debtToIncomeRatio = calculateDebtToIncomeRatio(0, state.monthlyIncome); // TODO: Add debt tracking
+          const burnRateScenarios = calculateBurnRateScenarios(state.monthlyIncome, monthlyExpenses);
+          
+          const goalsForAnalysis = state.goals.map(goal => ({
+            targetAmount: goal.targetAmount - goal.currentAmount,
+            monthsToTarget: Math.ceil((new Date(goal.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30))
+          }));
+          
+          const lifestyleAffordability = analyzeLifestyleAffordability(state.monthlyIncome, monthlyExpenses, goalsForAnalysis);
+          const financialRisk = assessFinancialRisk(burnRate, emergencyRunwayMonths, debtToIncomeRatio, state.incomeStreams.length);
+          
           return {
             expenses,
             monthlyExpenses,
             burnRate,
             savingsRate,
             healthScore,
+            requiredIncome,
+            emergencyRunwayMonths,
+            debtToIncomeRatio,
+            burnRateScenarios,
+            lifestyleAffordability,
+            financialRisk,
           };
         });
       },
@@ -295,6 +390,33 @@ export const useDashboardStore = create<DashboardState>()(
         if (!goal) return null;
         
         return analyzeGoal(goal, state.monthlyIncome, state.monthlyExpenses);
+      },
+
+      getLifestyleAnalysis: () => {
+        const state = get();
+        return {
+          requiredIncome: state.requiredIncome,
+          emergencyRunwayMonths: state.emergencyRunwayMonths,
+          debtToIncomeRatio: state.debtToIncomeRatio,
+          lifestyleAffordability: state.lifestyleAffordability,
+          incomeForEmergencyFund: calculateIncomeForEmergencyFund(state.monthlyExpenses, 6),
+        };
+      },
+
+      getBurnRateAnalysis: () => {
+        const state = get();
+        return {
+          current: state.burnRate,
+          scenarios: state.burnRateScenarios,
+          recommendations: state.financialRisk.recommendations.filter(rec => 
+            rec.toLowerCase().includes('expense') || rec.toLowerCase().includes('burn')
+          ),
+        };
+      },
+
+      getFinancialRiskAssessment: () => {
+        const state = get();
+        return state.financialRisk;
       },
     }),
     {

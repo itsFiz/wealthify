@@ -14,14 +14,14 @@ import {
 export default function Navbar() {
   return (
     <nav className="sticky top-4 z-50 mx-4">
-      <div className="container mx-auto bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50 rounded-2xl shadow-lg border border-white/10">
+      <div className="container mx-auto navbar-glass rounded-2xl">
         <div className="flex h-16 items-center px-6">
           <div className="mr-4 flex">
             <Link className="mr-6 flex items-center space-x-2 transition-all hover:scale-105" href="/">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Image src="/wealthifylogo.png" alt="Wealthify Logo" width={20} height={20} className="text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent animate-pulse">
+              <span className="text-xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
                 Wealthify
               </span>
             </Link>
@@ -34,7 +34,7 @@ export default function Navbar() {
                   <span>Products</span>
                   <ChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80 p-4 bg-background/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+                <DropdownMenuContent className="w-80 p-4 navbar-glass rounded-xl">
                   <DropdownMenuItem asChild className="p-3 rounded-lg hover:bg-primary/10 cursor-pointer">
                     <Link href="/tracking" className="flex items-start space-x-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -88,7 +88,7 @@ export default function Navbar() {
                   <span>Resources</span>
                   <ChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60 p-2 bg-background/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+                <DropdownMenuContent className="w-60 p-2 navbar-glass rounded-xl">
                   <DropdownMenuItem asChild className="p-3 rounded-lg hover:bg-primary/10 cursor-pointer">
                     <Link href="/blog">
                       <div className="font-medium">Blog</div>
@@ -137,7 +137,7 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="end" 
-                  className="w-56 glassmorphism-dropdown"
+                  className="w-56 navbar-glass rounded-xl"
                 >
                   <DropdownMenuItem asChild>
                     <Link href="/tracking" className="flex items-center">
@@ -178,18 +178,18 @@ export default function Navbar() {
 
             <div className="hidden md:flex items-center space-x-3">
               <ThemeToggle />
-              <Button size="sm" asChild className="shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent animate-pulse relative before:absolute before:inset-0 before:rounded before:border-2 before:border-primary/50 before:animate-pulse">
+              <Button size="sm" asChild className="navbar-cta-button rounded-lg px-4 py-2">
                 <Link href="/auth/signup">
                   <span className="hidden sm:inline">Open App</span>
                   <span className="sm:hidden">App</span>
-                  <ArrowUpRight className="ml-2 h-4 w-4 text-purple-500" />
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
 
             {/* Mobile CTA */}
             <div className="flex md:hidden">
-              <Button size="sm" asChild className="shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+              <Button size="sm" asChild className="navbar-cta-button rounded-lg px-3 py-2">
                 <Link href="/auth/signup">
                   <span>App</span>
                   <ArrowUpRight className="ml-1 h-4 w-4" />

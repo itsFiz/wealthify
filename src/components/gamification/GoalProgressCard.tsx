@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MilestoneProgress } from '@/components/ui/animated-progress';
 import { cn } from '@/lib/utils';
-import { calculateGoalProgress, formatCurrency } from '@/lib/calculations';
+import { calculateGoalProgress, formatCurrency } from '@/lib/calculations/index';
 import type { Goal } from '@/types';
 import { 
   Target, 
@@ -13,7 +13,15 @@ import {
   Trophy,
   Zap,
   Star,
-  Plus
+  Plus,
+  Car,
+  Home,
+  Shield,
+  CreditCard,
+  TrendingUp as Investment,
+  Plane,
+  Briefcase,
+  DollarSign
 } from 'lucide-react';
 
 interface GoalProgressCardProps {
@@ -31,7 +39,10 @@ export function GoalProgressCard({
 }: GoalProgressCardProps) {
   const progress = calculateGoalProgress(goal);
   const remainingAmount = goal.targetAmount - goal.currentAmount;
-  const timeRemaining = Math.ceil((goal.targetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Ensure targetDate is a Date object
+  const targetDate = new Date(goal.targetDate);
+  const timeRemaining = Math.ceil((targetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   
   // Calculate milestone levels (every 25%)
   const milestones = [25, 50, 75, 100];
@@ -56,23 +67,36 @@ export function GoalProgressCard({
     }
   };
 
-  const getCategoryEmoji = (category: string) => {
+  const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'VEHICLE': return '🚗';
-      case 'PROPERTY': return '🏠';
-      case 'EMERGENCY_FUND': return '🆘';
-      case 'DEBT_PAYOFF': return '💳';
-      case 'INVESTMENT': return '📈';
-      case 'VACATION': return '✈️';
-      case 'BUSINESS': return '💼';
-      default: return '🎯';
+      case 'VEHICLE': return <Car className="h-6 w-6" />;
+      case 'PROPERTY': return <Home className="h-6 w-6" />;
+      case 'EMERGENCY_FUND': return <Shield className="h-6 w-6" />;
+      case 'DEBT_PAYOFF': return <CreditCard className="h-6 w-6" />;
+      case 'INVESTMENT': return <Investment className="h-6 w-6" />;
+      case 'VACATION': return <Plane className="h-6 w-6" />;
+      case 'BUSINESS': return <Briefcase className="h-6 w-6" />;
+      default: return <Target className="h-6 w-6" />;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'VEHICLE': return 'text-blue-500';
+      case 'PROPERTY': return 'text-green-500';
+      case 'EMERGENCY_FUND': return 'text-red-500';
+      case 'DEBT_PAYOFF': return 'text-orange-500';
+      case 'INVESTMENT': return 'text-purple-500';
+      case 'VACATION': return 'text-cyan-500';
+      case 'BUSINESS': return 'text-yellow-500';
+      default: return 'text-primary';
     }
   };
 
   return (
     <Card 
       className={cn(
-        "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 border-2",
+        "relative overflow-hidden transition-all duration-300 border-2 goal-card",
         progress >= 100 ? "border-green-500/50 bg-gradient-to-br from-green-50 to-emerald-50" :
         progress >= 75 ? "border-blue-500/50 bg-gradient-to-br from-blue-50 to-purple-50" :
         progress >= 50 ? "border-yellow-500/50 bg-gradient-to-br from-yellow-50 to-orange-50" :
@@ -87,8 +111,10 @@ export function GoalProgressCard({
       
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">{getCategoryEmoji(goal.category)}</span>
+          <div className="flex items-center space-x-3">
+            <div className={cn("p-2 rounded-lg bg-muted/30", getCategoryColor(goal.category))}>
+              {getCategoryIcon(goal.category)}
+            </div>
             <div>
               <CardTitle className="text-lg font-bold">
                 {goal.name}
@@ -119,46 +145,33 @@ export function GoalProgressCard({
 
       <CardContent className="space-y-4">
         {/* Progress Bar with XP styling */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span className="font-medium">Progress</span>
             <span className="font-bold">{progress.toFixed(1)}%</span>
           </div>
-          <div className="relative">
-            <Progress 
-              value={progress} 
-              className="h-3 bg-gray-200 rounded-full overflow-hidden"
-            />
-            <div 
-              className={cn(
-                "absolute top-0 left-0 h-3 rounded-full transition-all duration-1000 ease-out",
-                getProgressColor(progress)
-              )}
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
-            
-            {/* Milestone markers */}
-            {milestones.map((milestone) => (
-              <div
-                key={milestone}
-                className="absolute top-0 flex items-center justify-center"
-                style={{ left: `${milestone}%`, transform: 'translateX(-50%)' }}
-              >
-                <div 
-                  className={cn(
-                    "w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs transition-all",
-                    completedMilestones.includes(milestone)
-                      ? "bg-primary text-white border-primary shadow-lg scale-110"
-                      : milestone === currentMilestone
-                      ? "bg-white border-primary text-primary animate-pulse"
-                      : "bg-gray-200 border-gray-300 text-gray-500"
-                  )}
-                >
-                  {getMilestoneIcon(milestone)}
-                </div>
-              </div>
-            ))}
-          </div>
+          
+          <MilestoneProgress
+            value={progress}
+            max={100}
+            milestones={milestones}
+            milestoneIcons={milestones.map(getMilestoneIcon)}
+            completedMilestones={completedMilestones}
+            variant="glow"
+            size="lg"
+            colors={{
+              from: progress >= 100 ? 'from-green-400' : 
+                    progress >= 75 ? 'from-blue-400' : 
+                    progress >= 50 ? 'from-yellow-400' : 
+                    progress >= 25 ? 'from-orange-400' : 'from-gray-400',
+              to: progress >= 100 ? 'to-emerald-500' : 
+                  progress >= 75 ? 'to-purple-500' : 
+                  progress >= 50 ? 'to-orange-500' : 
+                  progress >= 25 ? 'to-red-500' : 'to-gray-500',
+              trail: 'bg-muted/20'
+            }}
+            className="mt-2"
+          />
         </div>
 
         {/* Financial Details */}

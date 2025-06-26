@@ -59,13 +59,13 @@ export default function HomePage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Button size="lg" asChild className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-lg px-8 py-6 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white hover:border-purple-400">
+                <Button size="lg" asChild className="w-full sm:w-auto btn-primary text-lg px-8 py-6">
                   <Link href="/auth/signup">
                     Start Your Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 text-lg px-8 py-6">
+                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-200 text-lg px-8 py-6">
                   <Link href="/demo">
                     View Demo
                   </Link>
@@ -106,10 +106,10 @@ export default function HomePage() {
             </div>
             
             <div className="mx-auto max-w-7xl grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Multi-Stream Income</CardTitle>
@@ -122,10 +122,10 @@ export default function HomePage() {
                 </CardContent>
               </Card>
               
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <Target className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Smart Goal Planning</CardTitle>
@@ -138,10 +138,10 @@ export default function HomePage() {
                 </CardContent>
               </Card>
               
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <Calculator className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Affordability Calculator</CardTitle>
@@ -154,10 +154,10 @@ export default function HomePage() {
                 </CardContent>
               </Card>
               
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <PieChart className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Burn Rate Tracking</CardTitle>
@@ -170,10 +170,10 @@ export default function HomePage() {
                 </CardContent>
               </Card>
               
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <Zap className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Gamified Experience</CardTitle>
@@ -186,10 +186,10 @@ export default function HomePage() {
                 </CardContent>
               </Card>
               
-              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/20 metric-card">
+              <Card className="metric-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                       <CheckCircle className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">Health Score</CardTitle>
@@ -220,7 +220,7 @@ export default function HomePage() {
                 Start your transformation today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Button size="lg" asChild className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-lg px-8 py-6 bg-transparent border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white hover:border-purple-400">
+                <Button size="lg" asChild className="w-full sm:w-auto btn-primary text-lg px-8 py-6">
                   <Link href="/auth/signup">
                     Get Started Free
                     <ArrowRight className="ml-2 h-5 w-5" />

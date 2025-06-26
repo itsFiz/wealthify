@@ -49,8 +49,14 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  image?: string;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Simple Financial Position
+  currentSavings?: number; // Total liquid savings
+  totalDebt?: number; // Total debt amount
+  // netWorth calculated as: currentSavings - totalDebt
 }
 
 export interface IncomeStream {
@@ -60,6 +66,8 @@ export interface IncomeStream {
   type: IncomeType;
   expectedMonthly: number;
   actualMonthly?: number;
+  frequency: Frequency;
+  earnedDate?: Date;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +91,7 @@ export interface Expense {
   type: ExpenseType;
   amount: number;
   frequency: Frequency;
+  incurredDate?: Date; // Date when expense was incurred/paid
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -112,6 +121,14 @@ export interface Goal {
   createdAt: Date;
   updatedAt: Date;
   contributions?: GoalContribution[];
+  // Image upload
+  imageUrl?: string;
+  // New depreciation fields
+  isAssetGoal?: boolean;
+  initialAssetPrice?: number;
+  depreciationRate?: number; // Annual depreciation rate (0.06 = 6%)
+  downPaymentRatio?: number; // 0.2 = 20% down payment
+  projectedPrice?: number; // Calculated projected price
 }
 
 export interface GoalContribution {
@@ -141,6 +158,8 @@ export interface CreateIncomeStreamData {
   type: IncomeType;
   expectedMonthly: number;
   actualMonthly?: number;
+  frequency: Frequency;
+  earnedDate?: Date;
 }
 
 export interface CreateExpenseData {
@@ -149,6 +168,7 @@ export interface CreateExpenseData {
   type: ExpenseType;
   amount: number;
   frequency: Frequency;
+  incurredDate?: Date;
 }
 
 export interface CreateGoalData {
@@ -220,4 +240,189 @@ export interface PaginatedResponse<T> {
     total: number;
     totalPages: number;
   };
-} 
+}
+
+// New interfaces for depreciation forecasting
+export interface AssetDepreciation {
+  assetType: string;
+  annualDepreciationRate: number;
+  description: string;
+}
+
+export interface GoalForecast {
+  goalId: string;
+  currentPrice: number;
+  projectedPrice: number;
+  yearsToTarget: number;
+  monthlyRequiredSavings: number;
+  monthlyRequiredDownPayment?: number;
+  affordabilityScore: number; // 0-100 based on current income
+  recommendations: string[];
+}
+
+// Predefined asset depreciation rates
+export const ASSET_DEPRECIATION_RATES: Record<string, AssetDepreciation> = {
+  VEHICLE_SPORTS: {
+    assetType: 'Sports Car (GR86, etc.)',
+    annualDepreciationRate: 0.057, // 5.7% based on your data
+    description: 'Sports cars typically depreciate 25.7% over 5 years'
+  },
+  VEHICLE_LUXURY: {
+    assetType: 'Luxury Vehicle',
+    annualDepreciationRate: 0.065, // 6.5%
+    description: 'Luxury vehicles depreciate faster than sports cars'
+  },
+  VEHICLE_STANDARD: {
+    assetType: 'Standard Vehicle',
+    annualDepreciationRate: 0.045, // 4.5%
+    description: 'Standard vehicles have slower depreciation'
+  },
+  PROPERTY_RESIDENTIAL: {
+    assetType: 'Residential Property',
+    annualDepreciationRate: -0.03, // Negative = appreciation
+    description: 'Property typically appreciates 3% annually in Malaysia'
+  },
+  PROPERTY_COMMERCIAL: {
+    assetType: 'Commercial Property',
+    annualDepreciationRate: -0.025, // 2.5% appreciation
+    description: 'Commercial properties with stable 2-3% growth'
+  },
+  PROPERTY_PRIME_LOCATION: {
+    assetType: 'Prime Location Property',
+    annualDepreciationRate: -0.05, // 5% appreciation
+    description: 'KL city center, prime areas with higher growth potential'
+  },
+  PROPERTY_AFFORDABLE: {
+    assetType: 'Affordable Housing',
+    annualDepreciationRate: -0.02, // 2% appreciation
+    description: 'Government-backed affordable housing schemes'
+  },
+  PROPERTY_INVESTMENT: {
+    assetType: 'Investment Property',
+    annualDepreciationRate: -0.035, // 3.5% appreciation
+    description: 'Properties bought specifically for rental income'
+  },
+  ELECTRONICS: {
+    assetType: 'Electronics/Tech',
+    annualDepreciationRate: 0.15, // 15%
+    description: 'Technology depreciates rapidly'
+  }
+};
+
+// Goal category configuration for smart form behavior
+export interface GoalCategoryConfig {
+  category: GoalCategory;
+  label: string;
+  icon: string; // Lucide icon name
+  color: string;
+  description: string;
+  hasForecasting: boolean; // Enable price forecasting
+  forecastType: 'APPRECIATION' | 'DEPRECIATION' | 'STATIC' | 'NONE';
+  isAssetGoal: boolean;
+  defaultRates?: number[]; // Suggested rates for dropdowns
+  showDownPayment: boolean;
+  suggestedTimeline: string; // Helper text for timeline
+}
+
+// Predefined goal category configurations
+export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
+  [GoalCategory.EMERGENCY_FUND]: {
+    category: GoalCategory.EMERGENCY_FUND,
+    label: 'Emergency Fund',
+    icon: 'Shield',
+    color: 'text-red-500',
+    description: 'Build a safety net for unexpected expenses (3-6 months of expenses)',
+    hasForecasting: false,
+    forecastType: 'STATIC',
+    isAssetGoal: false,
+    showDownPayment: false,
+    suggestedTimeline: 'Aim for 6-12 months to build emergency fund'
+  },
+  [GoalCategory.DEBT_PAYOFF]: {
+    category: GoalCategory.DEBT_PAYOFF,
+    label: 'Debt Payoff',
+    icon: 'CreditCard',
+    color: 'text-orange-500', 
+    description: 'Pay off existing debts (credit cards, loans, etc.)',
+    hasForecasting: false,
+    forecastType: 'STATIC',
+    isAssetGoal: false,
+    showDownPayment: false,
+    suggestedTimeline: 'Target aggressive payoff for high-interest debt'
+  },
+  [GoalCategory.PROPERTY]: {
+    category: GoalCategory.PROPERTY,
+    label: 'Property Purchase',
+    icon: 'Home',
+    color: 'text-green-500',
+    description: 'Buy residential or investment property with appreciation forecasting',
+    hasForecasting: true,
+    forecastType: 'APPRECIATION',
+    isAssetGoal: true,
+    defaultRates: [-0.02, -0.025, -0.03, -0.035, -0.05], // 2% to 5% appreciation
+    showDownPayment: true,
+    suggestedTimeline: 'Property purchases typically require 2-5 years of planning'
+  },
+  [GoalCategory.VEHICLE]: {
+    category: GoalCategory.VEHICLE,
+    label: 'Vehicle Purchase',
+    icon: 'Car',
+    color: 'text-blue-500',
+    description: 'Buy a car, motorcycle, or other vehicle with depreciation forecasting',
+    hasForecasting: true,
+    forecastType: 'DEPRECIATION',
+    isAssetGoal: true,
+    defaultRates: [0.045, 0.057, 0.065], // 4.5% to 6.5% depreciation
+    showDownPayment: true,
+    suggestedTimeline: 'Vehicle goals typically span 1-3 years'
+  },
+  [GoalCategory.INVESTMENT]: {
+    category: GoalCategory.INVESTMENT,
+    label: 'Investment Goal',
+    icon: 'TrendingUp', 
+    color: 'text-purple-500',
+    description: 'Build investment portfolio or reach investment milestones',
+    hasForecasting: true,
+    forecastType: 'APPRECIATION',
+    isAssetGoal: false,
+    defaultRates: [-0.05, -0.07, -0.10], // 5% to 10% returns
+    showDownPayment: false,
+    suggestedTimeline: 'Long-term investments work best (5+ years)'
+  },
+  [GoalCategory.VACATION]: {
+    category: GoalCategory.VACATION,
+    label: 'Vacation/Travel',
+    icon: 'Plane',
+    color: 'text-cyan-500',
+    description: 'Save for dream vacation or travel experiences',
+    hasForecasting: false,
+    forecastType: 'STATIC',
+    isAssetGoal: false,
+    showDownPayment: false,
+    suggestedTimeline: 'Plan 6-18 months ahead for best flight deals'
+  },
+  [GoalCategory.BUSINESS]: {
+    category: GoalCategory.BUSINESS,
+    label: 'Business Goal',
+    icon: 'Briefcase',
+    color: 'text-yellow-500',
+    description: 'Start a business or expand existing operations',
+    hasForecasting: false,
+    forecastType: 'STATIC',
+    isAssetGoal: false,
+    showDownPayment: false,
+    suggestedTimeline: 'Business goals vary widely - plan accordingly'
+  },
+  [GoalCategory.OTHER]: {
+    category: GoalCategory.OTHER,
+    label: 'Other Goal',
+    icon: 'Archive',
+    color: 'text-gray-500',
+    description: 'Custom financial goal with optional forecasting',
+    hasForecasting: true,
+    forecastType: 'NONE',
+    isAssetGoal: false,
+    showDownPayment: false,
+    suggestedTimeline: 'Set realistic timeline based on goal amount'
+  }
+}; 

@@ -144,14 +144,14 @@
     background-clip: text;
   }
   
-  /* Enhanced card hover effects */
+  /* Enhanced card hover effects - FIXED TO BE SUBTLE */
   .card-hover {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .card-hover:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.15);
   }
   
   /* Button enhancements */
@@ -316,8 +316,8 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Light Mode Glassmorphism Cards */
-.metric-card {
+/* Light Mode Glassmorphism Cards - FIXED HOVER WITH HIGH SPECIFICITY */
+.metric-card.metric-card {
   background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -329,17 +329,14 @@
   border-radius: 16px !important;
 }
 
-.metric-card:hover {
-  transform: translateY(-8px) scale(1.02) !important;
-  box-shadow: 
-    0 25px 50px 0 rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+.metric-card.metric-card:hover {
+  transform: translateY(-3px) !important;
   background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
 }
 
-/* Dark Mode Glassmorphism Cards */
-.dark .metric-card {
+/* Dark Mode Glassmorphism Cards - FIXED HOVER WITH HIGH SPECIFICITY */
+.dark .metric-card.metric-card {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 
@@ -347,16 +344,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.dark .metric-card:hover {
-  box-shadow: 
-    0 25px 50px 0 rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+.dark .metric-card.metric-card:hover {
+  transform: translateY(-3px) !important;
   background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(139, 92, 246, 0.25) !important;
 }
 
-/* Light Mode Goal Cards */
-.goal-card {
+/* Light Mode Goal Cards - FIXED HOVER WITH HIGH SPECIFICITY */
+.goal-card.goal-card {
   background: 
     linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(6, 182, 212, 0.04) 100%),
     rgba(255, 255, 255, 0.8) !important;
@@ -366,25 +361,22 @@
   box-shadow: 
     0 8px 32px 0 rgba(139, 92, 246, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   border-radius: 20px !important;
   position: relative !important;
   overflow: hidden !important;
 }
 
-.goal-card:hover {
-  transform: translateY(-12px) scale(1.03) !important;
-  box-shadow: 
-    0 35px 60px 0 rgba(139, 92, 246, 0.2),
-    0 0 0 1px rgba(139, 92, 246, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+.goal-card.goal-card:hover {
+  transform: translateY(-4px) !important;
   background: 
     linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%),
     rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(139, 92, 246, 0.25) !important;
 }
 
-/* Dark Mode Goal Cards */
-.dark .goal-card {
+/* Dark Mode Goal Cards - FIXED HOVER WITH HIGH SPECIFICITY */
+.dark .goal-card.goal-card {
   background: 
     linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%),
     rgba(255, 255, 255, 0.03) !important;
@@ -394,14 +386,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.dark .goal-card:hover {
-  box-shadow: 
-    0 35px 60px 0 rgba(139, 92, 246, 0.4),
-    0 0 0 1px rgba(139, 92, 246, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+.dark .goal-card.goal-card:hover {
+  transform: translateY(-4px) !important;
   background: 
     linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.08) 100%),
     rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
 }
 
 /* Light Mode Sidebar */
@@ -501,16 +491,114 @@
 
 /* Theme Toggle Button */
 .glassmorphism-button {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  transition: all 0.3s ease !important;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glassmorphism-button:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.05) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
+
+.glassmorphism-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+/* Input Field Styles - More Visible */
+input.glassmorphism-button, 
+textarea.glassmorphism-button {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(0, 0, 0, 0.1) !important;
+  color: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+input.glassmorphism-button:hover, 
+textarea.glassmorphism-button:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid rgba(139, 92, 246, 0.3) !important;
+  outline: 1px solid rgba(139, 92, 246, 0.2);
+  outline-offset: 1px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+input.glassmorphism-button:focus, 
+textarea.glassmorphism-button:focus {
+  background: rgba(255, 255, 255, 1) !important;
+  border: 2px solid rgba(139, 92, 246, 0.5) !important;
+  transform: translateY(0);
+  box-shadow: 
+    0 0 0 3px rgba(139, 92, 246, 0.2),
+    0 4px 12px rgba(139, 92, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Dark Mode Input Fields */
+.dark input.glassmorphism-button, 
+.dark textarea.glassmorphism-button {
+  background: rgba(0, 0, 0, 0.7) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark input.glassmorphism-button:hover, 
+.dark textarea.glassmorphism-button:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border: 2px solid rgba(139, 92, 246, 0.4) !important;
+  outline: 1px solid rgba(139, 92, 246, 0.3);
+  outline-offset: 1px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark input.glassmorphism-button:focus, 
+.dark textarea.glassmorphism-button:focus {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 2px solid rgba(139, 92, 246, 0.6) !important;
+  box-shadow: 
+    0 0 0 3px rgba(139, 92, 246, 0.3),
+    0 4px 12px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Button Styles - Keep Existing */
+button.glassmorphism-button {
+  backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+button.glassmorphism-button:hover {
+  outline: 2px solid rgba(139, 92, 246, 0.3);
+  outline-offset: 2px;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+}
+
+button.glassmorphism-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+/* Error State Input Fields */
+input.glassmorphism-button.border-red-500 {
+  border: 2px solid rgba(239, 68, 68, 0.6) !important;
+  background: rgba(255, 245, 245, 0.9) !important;
+}
+
+.dark input.glassmorphism-button.border-red-500 {
+  border: 2px solid rgba(239, 68, 68, 0.6) !important;
+  background: rgba(30, 0, 0, 0.8) !important;
 }
 
 /* Theme Dropdown */
@@ -806,4 +894,317 @@
 .dark .text-blue-500,
 .dark .text-red-500 {
   color: inherit !important;
+}
+
+/* Auth page specific styles */
+.auth-container {
+  background: linear-gradient(135deg, 
+    rgba(139, 92, 246, 0.1) 0%, 
+    rgba(79, 70, 229, 0.05) 50%, 
+    rgba(139, 92, 246, 0.1) 100%);
+}
+
+/* Enhanced motion effects */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Password strength indicator */
+.password-strength-bar {
+  transition: all 0.3s ease;
+}
+
+/* Form focus states */
+.auth-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Success message animations */
+.success-message {
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.1) 0%, 
+    rgba(34, 197, 94, 0.05) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+/* Error message animations */
+.error-message {
+  background: linear-gradient(135deg, 
+    rgba(239, 68, 68, 0.1) 0%, 
+    rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Google Sign-in Button Specific Styles */
+.glassmorphism-button.bg-white {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid rgba(0, 0, 0, 0.15) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  transition: all 0.2s ease;
+}
+
+.glassmorphism-button.bg-white:hover {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 2px solid rgba(139, 92, 246, 0.4) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  outline: 2px solid rgba(139, 92, 246, 0.2);
+  outline-offset: 2px;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Dark Mode Google Button */
+.dark .glassmorphism-button.bg-white,
+.dark .glassmorphism-button.dark\\:bg-gray-900 {
+  background: rgba(17, 24, 39, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease;
+}
+
+.dark .glassmorphism-button.bg-white:hover,
+.dark .glassmorphism-button.dark\\:bg-gray-900:hover {
+  background: rgba(17, 24, 39, 0.95) !important;
+  border: 2px solid rgba(139, 92, 246, 0.4) !important;
+  color: rgba(255, 255, 255, 1) !important;
+  outline: 2px solid rgba(139, 92, 246, 0.3);
+  outline-offset: 2px;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Primary Gradient Buttons - SIMPLE AND CLEAN APPROACH */
+.btn-primary {
+  background: #8B5CF6 !important;
+  color: white !important;
+  border: 2px solid #8B5CF6 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover {
+  background: #7C3AED !important;
+  border-color: #7C3AED !important;
+  color: white !important;
+}
+
+/* Force white text on primary buttons - SIMPLE OVERRIDE */
+.btn-primary,
+.btn-primary *,
+.btn-primary span,
+.btn-primary svg {
+  color: white !important;
+  fill: white !important;
+}
+
+.btn-primary:hover,
+.btn-primary:hover *,
+.btn-primary:hover span,
+.btn-primary:hover svg {
+  color: white !important;
+  fill: white !important;
+}
+
+/* Remove ALL the complex gradient button rules */
+
+/* Divider Styles - Better Contrast */
+.border-gray-300 {
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .border-gray-600,
+.dark\\:border-gray-600 {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Divider Text Background */
+.bg-background {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.dark .bg-background {
+  background: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* Label Text Colors */
+label {
+  color: rgba(15, 23, 42, 0.9) !important;
+  font-weight: 500;
+}
+
+.dark label {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Placeholder Text */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(107, 114, 128, 0.8) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(156, 163, 175, 0.8) !important;
+}
+
+/* General button text visibility - SIMPLIFIED */
+button.glassmorphism-button span,
+button.glassmorphism-button svg,
+button.glassmorphism-button div {
+  color: inherit !important;
+}
+
+/* Google button text colors - CLEAN */
+button.glassmorphism-button.bg-white span,
+button.glassmorphism-button.bg-white svg,
+button.glassmorphism-button.bg-white div {
+  color: rgba(31, 41, 55, 1) !important;
+}
+
+.dark button.glassmorphism-button.bg-white span,
+.dark button.glassmorphism-button.bg-white svg,
+.dark button.glassmorphism-button.bg-white div,
+.dark button.glassmorphism-button.dark\\:bg-gray-900 span,
+.dark button.glassmorphism-button.dark\\:bg-gray-900 svg,
+.dark button.glassmorphism-button.dark\\:bg-gray-900 div {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Clean CSS - No more complex overrides needed */
+
+/* Navbar glassmorphism styling - SEPARATE FROM CARDS */
+nav .navbar-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+nav .navbar-glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark nav .navbar-glass {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark nav .navbar-glass:hover {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Navbar button styling - SPECIFIC TO NAVBAR */
+nav .navbar-cta-button {
+  background: linear-gradient(135deg, hsl(262.1 83.3% 57.8%) 0%, hsl(280 65% 60%) 100%);
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 4px 16px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+nav .navbar-cta-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: white !important;
+}
+
+nav .navbar-cta-button:active {
+  transform: translateY(0);
+}
+
+/* Navbar link styling - SPECIFIC TO NAVBAR */
+nav .navbar-glass nav a {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+nav .navbar-glass nav a:hover {
+  color: hsl(262.1 83.3% 57.8%);
+}
+
+/* Navbar dropdown menu improvements - SPECIFIC TO NAVBAR */
+nav .navbar-glass .dropdown-content {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark nav .navbar-glass .dropdown-content {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Additional custom animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Add to utilities */
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1s infinite ease-in-out;
 }

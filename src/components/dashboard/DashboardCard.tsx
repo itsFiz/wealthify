@@ -18,6 +18,7 @@ interface DashboardCardProps {
   };
   icon?: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
 export function DashboardCard({ 
@@ -27,7 +28,8 @@ export function DashboardCard({
   trend,
   badge,
   icon,
-  className 
+  className,
+  onClick
 }: DashboardCardProps) {
   const getTrendColor = (type: 'positive' | 'negative' | 'neutral') => {
     switch (type) {
@@ -52,7 +54,14 @@ export function DashboardCard({
   };
 
   return (
-    <Card className={cn('metric-card relative overflow-hidden', className)}>
+    <Card 
+      className={cn(
+        'metric-card relative overflow-hidden', 
+        onClick && 'cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]',
+        className
+      )}
+      onClick={onClick}
+    >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 pointer-events-none" />
       

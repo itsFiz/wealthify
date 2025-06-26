@@ -21,11 +21,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <ThemeProvider defaultTheme="dark" storageKey="wealthify-ui-theme">
           <SessionProvider>
             <div className="flex h-full">
-              {/* Sidebar - only show on authenticated routes */}
-              <Sidebar className="hidden lg:flex" />
+              {/* Sidebar - always show on desktop, hidden on mobile */}
+              <div className="hidden lg:block lg:flex-shrink-0">
+                <Sidebar />
+              </div>
+              
+              {/* Mobile sidebar overlay - TODO: implement mobile menu */}
               
               {/* Main content */}
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
                 <main className="flex-1 overflow-auto">
                   {children}
                 </main>

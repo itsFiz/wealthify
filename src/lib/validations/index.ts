@@ -22,6 +22,14 @@ export const createIncomeStreamSchema = z.object({
   type: z.nativeEnum(IncomeType, { errorMap: () => ({ message: 'Invalid income type' }) }),
   expectedMonthly: positiveNumber,
   actualMonthly: optionalPositiveNumber,
+  frequency: z.nativeEnum(Frequency, { errorMap: () => ({ message: 'Invalid frequency' }) }).default(Frequency.MONTHLY),
+  earnedDate: z.string().refine((date) => {
+    if (!date) return true; // Allow empty date
+    const parsedDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return parsedDate <= today;
+  }, 'Earned date cannot be in the future').optional(),
 });
 
 export const updateIncomeStreamSchema = createIncomeStreamSchema.partial().extend({
@@ -45,6 +53,13 @@ export const createExpenseSchema = z.object({
   type: z.nativeEnum(ExpenseType, { errorMap: () => ({ message: 'Invalid expense type' }) }),
   amount: positiveNumber,
   frequency: z.nativeEnum(Frequency, { errorMap: () => ({ message: 'Invalid frequency' }) }),
+  incurredDate: z.string().refine((date) => {
+    if (!date) return true; // Allow empty date
+    const parsedDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return parsedDate <= today;
+  }, 'Expense date cannot be in the future').optional(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial().extend({

@@ -200,9 +200,6 @@ export function GoalProgressCard({
           </div>
         )}
       </CardContent>
-
-      {/* Hover glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-cyan-500/20 to-primary/20 rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-300 pointer-events-none" />
     </Card>
   );
 } 

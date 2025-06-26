@@ -23,7 +23,8 @@ import {
   Award,
   User,
   HelpCircle,
-  Bell
+  Bell,
+  Calendar
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -53,16 +54,17 @@ const navigationItems = [
     title: 'Financial Management',
     items: [
       {
-        name: 'Income Streams',
-        href: '/income',
-        icon: TrendingUp,
-        description: 'Manage income sources',
+        name: 'Finances',
+        href: '/finances',
+        icon: Wallet,
+        description: 'Manage all finances',
       },
       {
-        name: 'Expenses',
-        href: '/expenses',
-        icon: TrendingDown,
-        description: 'Track spending',
+        name: 'Entries',
+        href: '/entries',
+        icon: Calendar,
+        description: 'Monthly transactions',
+        badge: 'New',
       },
       {
         name: 'Goals',
@@ -127,10 +129,36 @@ const bottomItems = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   // Don't show sidebar on auth pages
-  if (pathname.startsWith('/auth') || !session) {
+  if (pathname.startsWith('/auth')) {
+    return null;
+  }
+
+  // Show loading state while session is loading
+  if (status === 'loading') {
+    return (
+      <div className={cn('flex h-full w-64 flex-col sidebar-glass', className)}>
+        <div className="flex h-16 items-center px-6 border-b border-white/10">
+          <div className="flex items-center space-x-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-cyan-500">
+              <Wallet className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold gradient-text">
+              Wealthify
+            </span>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Hide sidebar if not authenticated (after loading)
+  if (status === 'unauthenticated') {
     return null;
   }
 
