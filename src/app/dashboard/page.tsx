@@ -193,6 +193,9 @@ export default function Dashboard() {
     isProcessing: false,
   });
 
+  // Contribution deletion state
+  const [isDeletingContribution, setIsDeletingContribution] = useState<string>('');
+
   // Fetch user-specific data
   const fetchUserData = async () => {
     if (!user?.id) return;
@@ -490,12 +493,30 @@ export default function Dashboard() {
         response = await fetch(`/api/goals/${goalModal.goal.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            targetDate: new Date(formData.targetDate).toISOString(),
+          }),
         });
       }
 
+      console.log('📡 API response status:', response.status);
+      console.log('📡 API response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
-        const updatedGoal = await response.json();
+        const responseText = await response.text();
+        console.log('📡 Raw response text:', responseText);
+        
+        let updatedGoal;
+        try {
+          updatedGoal = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('❌ JSON parse error:', parseError);
+          console.error('❌ Response text that failed to parse:', responseText);
+          toast.error('Server returned invalid response. Please check the console for details.');
+          throw new Error('Invalid JSON response from server');
+        }
+        
         // Ensure dates are properly converted
         const processedGoal = {
           ...updatedGoal,
@@ -524,13 +545,28 @@ export default function Dashboard() {
         
         setGoalModal({ isOpen: false, goal: undefined, isSubmitting: false });
       } else {
-        const errorData = await response.json();
+        const responseText = await response.text();
+        console.error('❌ API error response text:', responseText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('❌ Error response is not JSON:', responseText);
+          toast.error(`Server error (${response.status}): ${responseText}`);
+          throw new Error(`Server returned ${response.status}: ${responseText}`);
+        }
+        
         toast.error(`Failed to update goal: ${errorData.error || 'Unknown error'}`);
         throw new Error('Failed to update goal');
       }
     } catch (error) {
       console.error('Error updating goal:', error);
-      toast.error('Failed to update goal. Please try again.');
+      if (error instanceof Error && error.message.includes('JSON')) {
+        toast.error('Server returned invalid response. Please try again or check console for details.');
+      } else {
+        toast.error('Failed to update goal. Please try again.');
+      }
       setGoalModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
@@ -887,6 +923,63 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteContribution = async (contributionId: string) => {
+    if (!goalDetailsModal.goal) return;
+    
+    setIsDeletingContribution(contributionId);
+    
+    try {
+      const response = await fetch(`/api/goals/${goalDetailsModal.goal.id}/contributions/${contributionId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const { contribution, goal: updatedGoal } = await response.json();
+        
+        console.log('🗑️ Contribution deleted successfully:', {
+          deletedContribution: contribution,
+          updatedGoal: updatedGoal,
+          originalGoal: goalDetailsModal.goal
+        });
+        
+        // Update the goal in the store with the updated data
+        const processedGoal = {
+          ...updatedGoal,
+          targetDate: new Date(updatedGoal.targetDate),
+          createdAt: new Date(updatedGoal.createdAt),
+          updatedAt: new Date(updatedGoal.updatedAt),
+          targetAmount: Number(updatedGoal.targetAmount),
+          currentAmount: Number(updatedGoal.currentAmount),
+          initialAssetPrice: updatedGoal.initialAssetPrice ? Number(updatedGoal.initialAssetPrice) : undefined,
+          depreciationRate: updatedGoal.depreciationRate ? Number(updatedGoal.depreciationRate) : undefined,
+          downPaymentRatio: updatedGoal.downPaymentRatio ? Number(updatedGoal.downPaymentRatio) : undefined,
+        };
+        
+        console.log('📝 Processed goal for store update:', processedGoal);
+        
+        // Update the goal in the store
+        updateGoal(goalDetailsModal.goal.id, processedGoal);
+        
+        // Update the goal details modal with the updated goal to keep it in sync
+        setGoalDetailsModal(prev => ({ ...prev, goal: processedGoal }));
+        
+        console.log('✅ Goal updated in store and modal state');
+        
+        toast.success(`🗑️ Contribution of ${formatCurrency(contribution.amount)} deleted successfully`);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ API error response:', errorData);
+        toast.error(`Failed to delete contribution: ${errorData.error || 'Unknown error'}`);
+        throw new Error('Failed to delete contribution');
+      }
+    } catch (error) {
+      console.error('Error deleting contribution:', error);
+      toast.error('Failed to delete contribution. Please try again.');
+    } finally {
+      setIsDeletingContribution('');
+    }
+  };
+
   // Modal control functions
   const openCreateGoalModal = () => {
     setGoalModal({ isOpen: true, goal: undefined, isSubmitting: false });
@@ -1147,93 +1240,110 @@ export default function Dashboard() {
         </div>
 
         {/* Main Metrics */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-          <DashboardCard
-            title="Current Balance"
-            value={formatCurrency(currentBalance, 'MYR', { 
-              placeholder: 'Set starting balance' 
-            })}
-            subtitle={`Auto-calculated (Start: ${formatCurrency(startingBalance)})`}
-            trend={currentSnapshot?.balanceChangePercent ? {
-              value: Math.abs(currentSnapshot.balanceChangePercent),
-              label: "vs last month",
-              type: currentSnapshot.balanceChangePercent > 0 ? "positive" : "negative"
-            } : undefined}
-            badge={{
-              text: startingBalance === 0 ? "Setup needed" :
-                    currentBalance > safeMonthlyExpenses * 3 ? "Healthy" : 
-                    currentBalance > safeMonthlyExpenses ? "Building" : 
-                    currentBalance > 0 ? "Low" : "Critical",
-              variant: startingBalance === 0 ? "secondary" :
-                      currentBalance > safeMonthlyExpenses * 3 ? "default" : "secondary"
-            }}
-            icon={<Wallet className="h-4 w-4" />}
-            onClick={openStartingBalanceModal}
-          />
+        <div className="space-y-4">
+          {/* Header with Edit Starting Balance Button */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">Financial Overview</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openStartingBalanceModal}
+              className="flex items-center space-x-2 bg-white/50 hover:bg-white/70 border-gray-200/60 backdrop-blur-sm"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Edit Starting Balance</span>
+            </Button>
+          </div>
           
-          <DashboardCard
-            title="Monthly Income"
-            value={formatCurrency(safeMonthlyIncome, 'MYR', { 
-              placeholder: 'No income data' 
-            })}
-            subtitle={`${incomeStreams.length} active streams`}
-            trend={formatTrend(currentSnapshot?.incomeChangePercent ?? null, "vs last month")}
-            badge={{
-              text: safeMonthlyIncome > 5000 ? "Strong" : 
-                    safeMonthlyIncome > 0 ? "Building" : "Setup needed",
-              variant: safeMonthlyIncome > 5000 ? "default" : "secondary"
-            }}
-            icon={<TrendingUp className="h-4 w-4" />}
-          />
-          
-          <DashboardCard
-            title="Monthly Expenses"
-            value={formatCurrency(safeMonthlyExpenses, 'MYR', { 
-              placeholder: 'No expense data' 
-            })}
-            subtitle="Including all categories"
-            trend={formatTrend(currentSnapshot?.expenseChangePercent ? -currentSnapshot.expenseChangePercent : null, "vs last month")}
-            badge={{
-              text: safeBurnRate < 50 ? "Controlled" : 
-                    safeBurnRate > 0 ? "Monitor" : "Setup needed",
-              variant: safeBurnRate < 50 && safeBurnRate > 0 ? "default" : "secondary"
-            }}
-            icon={<TrendingDown className="h-4 w-4" />}
-          />
-          
-          <DashboardCard
-            title="Monthly Savings"
-            value={formatCurrency(safeTotalSavings, 'MYR', { 
-              placeholder: 'Complete setup' 
-            })}
-            subtitle={`${formatPercentage(safeSavingsRate)} savings rate`}
-            trend={formatTrend(currentSnapshot?.savingsChangePercent ?? null, "vs last month")}
-            badge={{
-              text: safeSavingsRate > 20 ? "Excellent" : 
-                    safeSavingsRate > 10 ? "Good" : 
-                    safeSavingsRate > 0 ? "Improve" : "Setup needed",
-              variant: safeSavingsRate > 20 ? "default" : "secondary"
-            }}
-            icon={<Wallet className="h-4 w-4" />}
-          />
-          
-          <DashboardCard
-            title="Health Score"
-            value={`${safeHealthScore}/100`}
-            subtitle="Financial wellness"
-            trend={currentSnapshot?.healthScoreChange ? {
-              value: Math.abs(currentSnapshot.healthScoreChange),
-              label: "vs last month",
-              type: currentSnapshot.healthScoreChange > 0 ? "positive" : "negative"
-            } : undefined}
-            badge={{
-              text: safeHealthScore > 70 ? "Great" : 
-                    safeHealthScore > 50 ? "Good" : 
-                    safeHealthScore > 0 ? "Needs Attention" : "Setup needed",
-              variant: safeHealthScore > 70 ? "default" : "secondary"
-            }}
-            icon={<Target className="h-4 w-4" />}
-          />
+          {/* Stats Cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <DashboardCard
+              title="Current Balance"
+              value={formatCurrency(currentBalance, 'MYR', { 
+                placeholder: 'Set starting balance' 
+              })}
+              subtitle={`Auto-calculated (Start: ${formatCurrency(startingBalance)})`}
+              trend={currentSnapshot?.balanceChangePercent ? {
+                value: Math.abs(currentSnapshot.balanceChangePercent),
+                label: "vs last month",
+                type: currentSnapshot.balanceChangePercent > 0 ? "positive" : "negative"
+              } : undefined}
+              badge={{
+                text: startingBalance === 0 ? "Setup needed" :
+                      currentBalance > safeMonthlyExpenses * 3 ? "Healthy" : 
+                      currentBalance > safeMonthlyExpenses ? "Building" : 
+                      currentBalance > 0 ? "Low" : "Critical",
+                variant: startingBalance === 0 ? "secondary" :
+                        currentBalance > safeMonthlyExpenses * 3 ? "default" : "secondary"
+              }}
+              icon={<Wallet className="h-4 w-4" />}
+              onClick={openStartingBalanceModal}
+            />
+            
+            <DashboardCard
+              title="Monthly Income"
+              value={formatCurrency(safeMonthlyIncome, 'MYR', { 
+                placeholder: 'No income data' 
+              })}
+              subtitle={`${incomeStreams.length} active streams`}
+              trend={formatTrend(currentSnapshot?.incomeChangePercent ?? null, "vs last month")}
+              badge={{
+                text: safeMonthlyIncome > 5000 ? "Strong" : 
+                      safeMonthlyIncome > 0 ? "Building" : "Setup needed",
+                variant: safeMonthlyIncome > 5000 ? "default" : "secondary"
+              }}
+              icon={<TrendingUp className="h-4 w-4" />}
+            />
+            
+            <DashboardCard
+              title="Monthly Expenses"
+              value={formatCurrency(safeMonthlyExpenses, 'MYR', { 
+                placeholder: 'No expense data' 
+              })}
+              subtitle="Including all categories"
+              trend={formatTrend(currentSnapshot?.expenseChangePercent ? -currentSnapshot.expenseChangePercent : null, "vs last month")}
+              badge={{
+                text: safeBurnRate < 50 ? "Controlled" : 
+                      safeBurnRate > 0 ? "Monitor" : "Setup needed",
+                variant: safeBurnRate < 50 && safeBurnRate > 0 ? "default" : "secondary"
+              }}
+              icon={<TrendingDown className="h-4 w-4" />}
+            />
+            
+            <DashboardCard
+              title="Monthly Savings"
+              value={formatCurrency(safeTotalSavings, 'MYR', { 
+                placeholder: 'Complete setup' 
+              })}
+              subtitle={`${formatPercentage(safeSavingsRate)} savings rate`}
+              trend={formatTrend(currentSnapshot?.savingsChangePercent ?? null, "vs last month")}
+              badge={{
+                text: safeSavingsRate > 20 ? "Excellent" : 
+                      safeSavingsRate > 10 ? "Good" : 
+                      safeSavingsRate > 0 ? "Improve" : "Setup needed",
+                variant: safeSavingsRate > 20 ? "default" : "secondary"
+              }}
+              icon={<Wallet className="h-4 w-4" />}
+            />
+            
+            <DashboardCard
+              title="Health Score"
+              value={`${safeHealthScore}/100`}
+              subtitle="Financial wellness"
+              trend={currentSnapshot?.healthScoreChange ? {
+                value: Math.abs(currentSnapshot.healthScoreChange),
+                label: "vs last month",
+                type: currentSnapshot.healthScoreChange > 0 ? "positive" : "negative"
+              } : undefined}
+              badge={{
+                text: safeHealthScore > 70 ? "Great" : 
+                      safeHealthScore > 50 ? "Good" : 
+                      safeHealthScore > 0 ? "Needs Attention" : "Setup needed",
+                variant: safeHealthScore > 70 ? "default" : "secondary"
+              }}
+              icon={<Target className="h-4 w-4" />}
+            />
+          </div>
         </div>
 
         {/* Goals Progress */}
@@ -1829,6 +1939,8 @@ export default function Dashboard() {
             openEditGoalModal(goalDetailsModal.goal);
           }
         }}
+        onDeleteContribution={handleDeleteContribution}
+        isDeletingContribution={isDeletingContribution}
       />
 
       {/* Delete Confirmation Modal */}

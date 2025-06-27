@@ -24,7 +24,8 @@ import {
   User,
   HelpCircle,
   Bell,
-  Calendar
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -77,6 +78,12 @@ const navigationItems = [
         href: '/budgets',
         icon: PieChart,
         description: 'Budget planning',
+      },
+      {
+        name: 'Debts',
+        href: '/debts',
+        icon: CreditCard,
+        description: 'Debt management',
       },
     ],
   },

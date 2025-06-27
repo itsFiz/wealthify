@@ -61,6 +61,11 @@ export async function DELETE(
           // Check if goal should no longer be marked as completed
           isCompleted: contribution.goal.currentAmount.sub(contribution.amount).lt(contribution.goal.targetAmount),
         },
+        include: {
+          contributions: {
+            orderBy: { month: 'desc' }
+          }
+        }
       });
 
       return { deleted, updatedGoal };
@@ -88,6 +93,10 @@ export async function DELETE(
         projectedPrice: deletedContribution.updatedGoal.projectedPrice 
           ? Number(deletedContribution.updatedGoal.projectedPrice) 
           : null,
+        contributions: deletedContribution.updatedGoal.contributions?.map(contrib => ({
+          ...contrib,
+          amount: Number(contrib.amount),
+        })) || [],
       },
     };
 

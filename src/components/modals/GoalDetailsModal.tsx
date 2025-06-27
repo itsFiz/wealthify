@@ -8,6 +8,8 @@ interface GoalDetailsModalProps {
   goal?: Goal;
   onAddContribution?: () => void;
   onEdit?: () => void;
+  onDeleteContribution?: (contributionId: string) => Promise<void>;
+  isDeletingContribution?: string;
 }
 
 export function GoalDetailsModal({
@@ -16,6 +18,8 @@ export function GoalDetailsModal({
   goal,
   onAddContribution,
   onEdit,
+  onDeleteContribution,
+  isDeletingContribution,
 }: GoalDetailsModalProps) {
   if (!isOpen || !goal) return null;
 
@@ -38,6 +42,8 @@ export function GoalDetailsModal({
           onAddContribution={onAddContribution}
           onEdit={onEdit}
           onClose={onClose}
+          onDeleteContribution={onDeleteContribution}
+          isDeletingContribution={isDeletingContribution}
         />
       </div>
     </div>

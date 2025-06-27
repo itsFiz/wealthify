@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MilestoneProgress } from '@/components/ui/animated-progress';
+import { Progress } from '@/components/ui/progress';
+import { GoalContributionsList } from '@/components/goals/GoalContributionsList';
 import { cn } from '@/lib/utils';
 import { calculateGoalProgress, formatCurrency } from '@/lib/calculations/index';
 import type { Goal, GoalContribution } from '@/types';
@@ -27,7 +29,12 @@ import {
   DollarSign,
   BarChart3,
   Clock,
-  CheckCircle
+  CheckCircle,
+  GraduationCap,
+  Baby,
+  Heart,
+  Gift,
+  Award
 } from 'lucide-react';
 
 interface GoalDetailsViewProps {
@@ -35,6 +42,8 @@ interface GoalDetailsViewProps {
   onAddContribution?: () => void;
   onEdit?: () => void;
   onClose?: () => void;
+  onDeleteContribution?: (contributionId: string) => Promise<void>;
+  isDeletingContribution?: string;
   className?: string;
 }
 
@@ -56,6 +65,8 @@ export function GoalDetailsView({
   onAddContribution,
   onEdit,
   onClose,
+  onDeleteContribution,
+  isDeletingContribution,
   className,
 }: GoalDetailsViewProps) {
   const progress = calculateGoalProgress(goal);
@@ -333,50 +344,12 @@ export function GoalDetailsView({
             )}
           </div>
           
-          {sortedContributions.length > 0 ? (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {sortedContributions.map((contribution) => (
-                <Card key={contribution.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold text-lg">
-                        {formatCurrency(contribution.amount)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(contribution.month).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </div>
-                      {contribution.notes && (
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {contribution.notes}
-                        </div>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      +{formatCurrency(contribution.amount)}
-                    </Badge>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Contributions Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start tracking your progress by adding your first contribution.
-              </p>
-              {onAddContribution && (
-                <Button onClick={onAddContribution} className="bg-gradient-to-r from-primary to-primary/80">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Contribution
-                </Button>
-              )}
-            </Card>
-          )}
+          <GoalContributionsList
+            contributions={sortedContributions}
+            goalName={goal.name}
+            onDeleteContribution={onDeleteContribution || (async () => {})}
+            isDeleting={isDeletingContribution}
+          />
         </div>
       </div>
     </div>

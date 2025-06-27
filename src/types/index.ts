@@ -44,6 +44,9 @@ export enum GoalCategory {
   OTHER = 'OTHER',
 }
 
+// Array of all goal categories for iteration
+export const GOAL_CATEGORIES = Object.values(GoalCategory);
+
 // Application types
 export interface User {
   id: string;
@@ -330,7 +333,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.EMERGENCY_FUND,
     label: 'Emergency Fund',
     icon: 'Shield',
-    color: 'text-red-500',
+    color: 'text-red-600',
     description: 'Build a safety net for unexpected expenses (3-6 months of expenses)',
     hasForecasting: false,
     forecastType: 'STATIC',
@@ -342,7 +345,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.DEBT_PAYOFF,
     label: 'Debt Payoff',
     icon: 'CreditCard',
-    color: 'text-orange-500', 
+    color: 'text-orange-600', 
     description: 'Pay off existing debts (credit cards, loans, etc.)',
     hasForecasting: false,
     forecastType: 'STATIC',
@@ -354,7 +357,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.PROPERTY,
     label: 'Property Purchase',
     icon: 'Home',
-    color: 'text-green-500',
+    color: 'text-green-600',
     description: 'Buy residential or investment property with appreciation forecasting',
     hasForecasting: true,
     forecastType: 'APPRECIATION',
@@ -367,7 +370,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.VEHICLE,
     label: 'Vehicle Purchase',
     icon: 'Car',
-    color: 'text-blue-500',
+    color: 'text-blue-600',
     description: 'Buy a car, motorcycle, or other vehicle with depreciation forecasting',
     hasForecasting: true,
     forecastType: 'DEPRECIATION',
@@ -380,7 +383,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.INVESTMENT,
     label: 'Investment Goal',
     icon: 'TrendingUp', 
-    color: 'text-purple-500',
+    color: 'text-purple-600',
     description: 'Build investment portfolio or reach investment milestones',
     hasForecasting: true,
     forecastType: 'APPRECIATION',
@@ -393,7 +396,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.VACATION,
     label: 'Vacation/Travel',
     icon: 'Plane',
-    color: 'text-cyan-500',
+    color: 'text-cyan-600',
     description: 'Save for dream vacation or travel experiences',
     hasForecasting: false,
     forecastType: 'STATIC',
@@ -405,7 +408,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.BUSINESS,
     label: 'Business Goal',
     icon: 'Briefcase',
-    color: 'text-yellow-500',
+    color: 'text-yellow-600',
     description: 'Start a business or expand existing operations',
     hasForecasting: false,
     forecastType: 'STATIC',
@@ -417,7 +420,7 @@ export const GOAL_CATEGORY_CONFIGS: Record<GoalCategory, GoalCategoryConfig> = {
     category: GoalCategory.OTHER,
     label: 'Other Goal',
     icon: 'Archive',
-    color: 'text-gray-500',
+    color: 'text-gray-600',
     description: 'Custom financial goal with optional forecasting',
     hasForecasting: true,
     forecastType: 'NONE',

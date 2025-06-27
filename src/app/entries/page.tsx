@@ -20,52 +20,55 @@ import {
   Eye,
   Edit,
   Trash2,
-  Search
+  Search,
+  Settings,
+  GiftIcon,
+  Loader,
+  Utensils,
+  Car,
+  Home,
+  Zap,
+  ShoppingBag,
+  Heart,
+  Gamepad2,
+  Briefcase
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface IncomeEntry {
   id: string;
-  incomeStreamId: string;
+  name: string;
   amount: number;
-  month: Date;
+  date: Date;
+  category?: string;
   notes?: string;
   createdAt: Date;
-  incomeStream: {
+  // For recurring entries
+  incomeStream?: {
     id: string;
     name: string;
     type: string;
   };
+  // For one-time entries
+  isOneTime?: boolean;
 }
 
 interface ExpenseEntry {
   id: string;
-  expenseId: string;
+  name: string;
   amount: number;
-  month: Date;
+  date: Date;
+  category?: string;
   notes?: string;
   createdAt: Date;
-  expense: {
+  // For recurring entries
+  expense?: {
     id: string;
     name: string;
     category: string;
-    type: string;
   };
-}
-
-interface IncomeStream {
-  id: string;
-  name: string;
-  type: string;
-  expectedMonthly: number;
-}
-
-interface Expense {
-  id: string;
-  name: string;
-  category: string;
-  type: string;
-  amount: number;
+  // For one-time entries
+  isOneTime?: boolean;
 }
 
 export default function EntriesPage() {
@@ -74,8 +77,6 @@ export default function EntriesPage() {
   // Data states
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>([]);
-  const [incomeStreams, setIncomeStreams] = useState<IncomeStream[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Filter states
@@ -86,16 +87,20 @@ export default function EntriesPage() {
   // Form states
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [isSubmittingIncome, setIsSubmittingIncome] = useState(false);
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
   const [incomeFormData, setIncomeFormData] = useState({
-    incomeStreamId: '',
+    name: '',
     amount: '',
-    month: new Date().toISOString().slice(0, 7), // YYYY-MM format
+    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+    category: 'FREELANCE', // Default category
     notes: ''
   });
   const [expenseFormData, setExpenseFormData] = useState({
-    expenseId: '',
+    name: '',
     amount: '',
-    month: new Date().toISOString().slice(0, 7), // YYYY-MM format
+    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+    category: 'FOOD', // Default category
     notes: ''
   });
 
@@ -118,32 +123,79 @@ export default function EntriesPage() {
         return queryString ? `?${queryString}` : '';
       };
 
-      // Fetch income streams and expenses for dropdowns
-      const [incomeStreamsRes, expensesRes, incomeEntriesRes, expenseEntriesRes] = await Promise.all([
-        fetch('/api/income'),
-        fetch('/api/expenses'),
+      // Fetch both recurring and one-time entries
+      const [
+        recurringIncomeRes, 
+        recurringExpenseRes, 
+        oneTimeIncomeRes, 
+        oneTimeExpenseRes
+      ] = await Promise.all([
         fetch(`/api/income-entries${buildQueryString()}`),
-        fetch(`/api/expense-entries${buildQueryString()}`)
+        fetch(`/api/expense-entries${buildQueryString()}`),
+        fetch(`/api/one-time-income${buildQueryString()}`),
+        fetch(`/api/one-time-expense${buildQueryString()}`)
       ]);
 
-      if (incomeStreamsRes.ok) {
-        const data = await incomeStreamsRes.json();
-        setIncomeStreams(data);
+      // Process recurring income entries
+      if (recurringIncomeRes.ok) {
+        const recurringIncomeData = await recurringIncomeRes.json();
+        const formattedRecurringIncome = recurringIncomeData.map((entry: any) => ({
+          id: entry.id,
+          name: entry.incomeStream?.name || 'Unknown Income Stream',
+          amount: entry.amount,
+          date: new Date(entry.month), // Convert month to date
+          category: entry.incomeStream?.type || 'OTHER',
+          notes: entry.notes,
+          createdAt: new Date(entry.createdAt),
+          incomeStream: entry.incomeStream,
+          isOneTime: false
+        }));
+        
+        // Process one-time income entries
+        let oneTimeIncomeData: any[] = [];
+        if (oneTimeIncomeRes.ok) {
+          oneTimeIncomeData = await oneTimeIncomeRes.json();
+          oneTimeIncomeData = oneTimeIncomeData.map((entry: any) => ({
+            ...entry,
+            date: new Date(entry.date),
+            createdAt: new Date(entry.createdAt),
+            isOneTime: true
+          }));
+        }
+        
+        // Combine both types
+        setIncomeEntries([...formattedRecurringIncome, ...oneTimeIncomeData]);
       }
 
-      if (expensesRes.ok) {
-        const data = await expensesRes.json();
-        setExpenses(data);
-      }
-
-      if (incomeEntriesRes.ok) {
-        const data = await incomeEntriesRes.json();
-        setIncomeEntries(data);
-      }
-
-      if (expenseEntriesRes.ok) {
-        const data = await expenseEntriesRes.json();
-        setExpenseEntries(data);
+      // Process recurring expense entries
+      if (recurringExpenseRes.ok) {
+        const recurringExpenseData = await recurringExpenseRes.json();
+        const formattedRecurringExpenses = recurringExpenseData.map((entry: any) => ({
+          id: entry.id,
+          name: entry.expense?.name || 'Unknown Expense',
+          amount: entry.amount,
+          date: new Date(entry.month), // Convert month to date
+          category: entry.expense?.category || 'OTHER',
+          notes: entry.notes,
+          createdAt: new Date(entry.createdAt),
+          expense: entry.expense,
+          isOneTime: false
+        }));
+        
+        // Process one-time expense entries
+        let oneTimeExpenseData: any[] = [];
+        if (oneTimeExpenseRes.ok) {
+          oneTimeExpenseData = await oneTimeExpenseRes.json();
+          oneTimeExpenseData = oneTimeExpenseData.map((entry: any) => ({
+            ...entry,
+            date: new Date(entry.date),
+            createdAt: new Date(entry.createdAt),
+            isOneTime: true
+          }));
+        }
+        
+        // Combine both types
+        setExpenseEntries([...formattedRecurringExpenses, ...oneTimeExpenseData]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -159,51 +211,33 @@ export default function EntriesPage() {
     }
   }, [user?.id, authLoading, selectedYear, selectedMonth]);
 
-  // Generate missing entries
-  const handleGenerateMissingEntries = async () => {
-    try {
-      const response = await fetch('/api/entries/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'all' }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success(`✅ Generated ${result.details.total} missing entries! (${result.details.incomeEntries} income, ${result.details.expenseEntries} expense)`);
-        fetchData(); // Refresh the data
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to generate entries');
-      }
-    } catch (error) {
-      console.error('Error generating entries:', error);
-      toast.error('Failed to generate entries');
-    }
-  };
-
   // Create income entry
   const handleCreateIncomeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmittingIncome) return;
+    
+    setIsSubmittingIncome(true);
+    
     try {
-      const response = await fetch('/api/income-entries', {
+      const response = await fetch('/api/one-time-income', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...incomeFormData,
           amount: parseFloat(incomeFormData.amount),
-          month: `${incomeFormData.month}-01`, // Convert to full date
+          date: incomeFormData.date, // Use specific date instead of month
         }),
       });
 
       if (response.ok) {
-        toast.success('Income entry added successfully!');
+        toast.success('One-time income entry added successfully!');
         setShowIncomeForm(false);
         setIncomeFormData({
-          incomeStreamId: '',
+          name: '',
           amount: '',
-          month: new Date().toISOString().slice(0, 7),
+          date: new Date().toISOString().split('T')[0],
+          category: 'FREELANCE',
           notes: ''
         });
         fetchData();
@@ -214,6 +248,8 @@ export default function EntriesPage() {
     } catch (error) {
       console.error('Error creating income entry:', error);
       toast.error('Failed to create income entry');
+    } finally {
+      setIsSubmittingIncome(false);
     }
   };
 
@@ -221,24 +257,29 @@ export default function EntriesPage() {
   const handleCreateExpenseEntry = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmittingExpense) return;
+    
+    setIsSubmittingExpense(true);
+    
     try {
-      const response = await fetch('/api/expense-entries', {
+      const response = await fetch('/api/one-time-expense', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...expenseFormData,
           amount: parseFloat(expenseFormData.amount),
-          month: `${expenseFormData.month}-01`, // Convert to full date
+          date: expenseFormData.date, // Use specific date instead of month
         }),
       });
 
       if (response.ok) {
-        toast.success('Expense entry added successfully!');
+        toast.success('One-time expense entry added successfully!');
         setShowExpenseForm(false);
         setExpenseFormData({
-          expenseId: '',
+          name: '',
           amount: '',
-          month: new Date().toISOString().slice(0, 7),
+          date: new Date().toISOString().split('T')[0],
+          category: 'FOOD',
           notes: ''
         });
         fetchData();
@@ -249,18 +290,20 @@ export default function EntriesPage() {
     } catch (error) {
       console.error('Error creating expense entry:', error);
       toast.error('Failed to create expense entry');
+    } finally {
+      setIsSubmittingExpense(false);
     }
   };
 
   // Filter entries based on search term
   const filteredIncomeEntries = incomeEntries.filter(entry =>
-    entry.incomeStream.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+    (entry.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (entry.notes?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   const filteredExpenseEntries = expenseEntries.filter(entry =>
-    entry.expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+    (entry.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (entry.notes?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   // Calculate totals
@@ -293,28 +336,24 @@ export default function EntriesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Financial Entries</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Comprehensive Financial Entries</h1>
             <p className="text-gray-600 mt-1">
-              Track actual monthly income and expense transactions
+              View all your financial activity - both recurring monthly entries and one-time transactions
             </p>
             <div className="mt-2 text-xs text-gray-500 space-y-1">
-              <div>• <strong>Dashboard balance</strong> uses auto-calculated amounts from income streams/expenses</div>
-              <div>• <strong>Analytics trends</strong> use these actual monthly entries for historical analysis</div>
-              <div>• Use "Generate Missing" to auto-create entries from your income streams and expenses</div>
+              <div>• <strong>Recurring entries:</strong> Monthly income streams and expenses (automated from Dashboard)</div>
+              <div>• <strong>One-time entries:</strong> Specific date transactions like freelance payments, medical bills, etc.</div>
+              <div>• <strong>Comprehensive view:</strong> Complete monthly breakdown for analysis and tracking</div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Button onClick={handleGenerateMissingEntries} variant="outline" className="bg-blue-50 hover:bg-blue-100 text-blue-700">
-              <Calendar className="h-4 w-4 mr-2" />
-              Generate Missing
-            </Button>
             <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Income
+              Add One-Time Income
             </Button>
             <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Expense
+              Add One-Time Expense
             </Button>
           </div>
         </div>
@@ -496,17 +535,17 @@ export default function EntriesPage() {
         <Tabs defaultValue="income" className="space-y-6">
           <TabsList className="bg-white border border-gray-200">
             <TabsTrigger value="income" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-              Income Entries ({filteredIncomeEntries.length})
+              All Income Entries ({filteredIncomeEntries.length})
             </TabsTrigger>
             <TabsTrigger value="expenses" className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-              Expense Entries ({filteredExpenseEntries.length})
+              All Expenses ({filteredExpenseEntries.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="income" className="space-y-4">
             <Card className="border-gray-200 bg-white">
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-900">Income Entries</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-900">All Income Entries</CardTitle>
               </CardHeader>
               <CardContent>
                 {filteredIncomeEntries.length > 0 ? (
@@ -518,9 +557,27 @@ export default function EntriesPage() {
                             <TrendingUp className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <h4 className="font-medium text-gray-900">{entry.incomeStream.name}</h4>
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900">{entry.name}</h4>
+                              {entry.isOneTime ? (
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  One-time
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                  Recurring
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600">
-                              {new Date(entry.month).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}
+                              {entry.isOneTime 
+                                ? new Date(entry.date).toLocaleDateString('en-MY', { 
+                                    day: 'numeric', month: 'long', year: 'numeric' 
+                                  })
+                                : new Date(entry.date).toLocaleDateString('en-MY', { 
+                                    month: 'long', year: 'numeric' 
+                                  })
+                              }
                             </p>
                             {entry.notes && (
                               <p className="text-xs text-gray-500 mt-1">{entry.notes}</p>
@@ -532,7 +589,7 @@ export default function EntriesPage() {
                             {formatCurrency(entry.amount)}
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            {entry.incomeStream.type}
+                            {entry.category || 'OTHER'}
                           </Badge>
                         </div>
                       </div>
@@ -541,16 +598,13 @@ export default function EntriesPage() {
                 ) : (
                   <div className="text-center py-8">
                     <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No income entries</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No income entries found</h3>
                     <p className="text-gray-600 mb-4">
-                      {incomeStreams.length === 0 
-                        ? "Create income streams first, then add monthly entries"
-                        : "Start tracking your monthly income by adding entries"
-                      }
+                      No recurring or one-time income entries match your current filters
                     </p>
                     <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Income Entry
+                      Add One-Time Income
                     </Button>
                   </div>
                 )}
@@ -561,7 +615,7 @@ export default function EntriesPage() {
           <TabsContent value="expenses" className="space-y-4">
             <Card className="border-gray-200 bg-white">
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-900">Expense Entries</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-900">All Expense Entries</CardTitle>
               </CardHeader>
               <CardContent>
                 {filteredExpenseEntries.length > 0 ? (
@@ -573,9 +627,27 @@ export default function EntriesPage() {
                             <TrendingDown className="h-5 w-5 text-red-600" />
                           </div>
                           <div>
-                            <h4 className="font-medium text-gray-900">{entry.expense.name}</h4>
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900">{entry.name}</h4>
+                              {entry.isOneTime ? (
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  One-time
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                  Recurring
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600">
-                              {new Date(entry.month).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}
+                              {entry.isOneTime 
+                                ? new Date(entry.date).toLocaleDateString('en-MY', { 
+                                    day: 'numeric', month: 'long', year: 'numeric' 
+                                  })
+                                : new Date(entry.date).toLocaleDateString('en-MY', { 
+                                    month: 'long', year: 'numeric' 
+                                  })
+                              }
                             </p>
                             {entry.notes && (
                               <p className="text-xs text-gray-500 mt-1">{entry.notes}</p>
@@ -587,7 +659,7 @@ export default function EntriesPage() {
                             {formatCurrency(entry.amount)}
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            {entry.expense.category}
+                            {entry.category || 'OTHER'}
                           </Badge>
                         </div>
                       </div>
@@ -596,16 +668,13 @@ export default function EntriesPage() {
                 ) : (
                   <div className="text-center py-8">
                     <TrendingDown className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No expense entries</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No expense entries found</h3>
                     <p className="text-gray-600 mb-4">
-                      {expenses.length === 0 
-                        ? "Create expenses first, then add monthly entries"
-                        : "Start tracking your monthly expenses by adding entries"
-                      }
+                      No recurring or one-time expense entries match your current filters
                     </p>
                     <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Expense Entry
+                      Add One-Time Expense
                     </Button>
                   </div>
                 )}
@@ -616,144 +685,342 @@ export default function EntriesPage() {
 
         {/* Income Form Modal */}
         {showIncomeForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Add Income Entry</h3>
-              <form onSubmit={handleCreateIncomeEntry} className="space-y-4">
-                <div>
-                  <Label htmlFor="incomeStream">Income Stream</Label>
-                  <Select value={incomeFormData.incomeStreamId} onValueChange={(value) => 
-                    setIncomeFormData(prev => ({ ...prev, incomeStreamId: value }))
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select income stream" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {incomeStreams.map((stream) => (
-                        <SelectItem key={stream.id} value={stream.id}>
-                          {stream.name} - {formatCurrency(stream.expectedMonthly)}
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
+              <div className="p-6 border-b border-gray-200/50">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <Plus className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold gradient-text">Add One-Time Income</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Record a specific income transaction</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <form onSubmit={handleCreateIncomeEntry} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-foreground">Income Name</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        value={incomeFormData.name}
+                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Freelance Project, Affiliate Commission"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Amount (RM)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={incomeFormData.amount}
+                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-sm font-semibold text-foreground">Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="date"
+                        type="date"
+                        value={incomeFormData.date}
+                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, date: e.target.value }))}
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-semibold text-foreground">Category</Label>
+                    <Select value={incomeFormData.category} onValueChange={(value) => 
+                      setIncomeFormData(prev => ({ ...prev, category: value }))
+                    }>
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+                        <SelectItem value="FREELANCE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <TrendingUp className="h-4 w-4 text-blue-600" />
+                            <span>Freelance</span>
+                          </div>
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                        <SelectItem value="AFFILIATE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                            <span>Affiliate</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ADSENSE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Eye className="h-4 w-4 text-purple-600" />
+                            <span>AdSense</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="GIGS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <TrendingUp className="h-4 w-4 text-orange-600" />
+                            <span>Gigs</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="BONUS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Plus className="h-4 w-4 text-yellow-600" />
+                            <span>Bonus</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="GIFT" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <GiftIcon className="h-4 w-4 text-pink-600" />
+                            <span>Gift</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="amount">Amount (RM)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={incomeFormData.amount}
-                    onChange={(e) => setIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
+                    <div className="relative">
+                      <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="notes"
+                        value={incomeFormData.notes}
+                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Additional details..."
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <Label htmlFor="month">Month</Label>
-                  <Input
-                    id="month"
-                    type="month"
-                    value={incomeFormData.month}
-                    onChange={(e) => setIncomeFormData(prev => ({ ...prev, month: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Input
-                    id="notes"
-                    value={incomeFormData.notes}
-                    onChange={(e) => setIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Additional notes..."
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowIncomeForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                    Add Entry
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => setShowIncomeForm(false)}
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmittingIncome}
+                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isSubmittingIncome ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Income
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Expense Form Modal */}
         {showExpenseForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Add Expense Entry</h3>
-              <form onSubmit={handleCreateExpenseEntry} className="space-y-4">
-                <div>
-                  <Label htmlFor="expense">Expense</Label>
-                  <Select value={expenseFormData.expenseId} onValueChange={(value) => 
-                    setExpenseFormData(prev => ({ ...prev, expenseId: value }))
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select expense" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {expenses.map((expense) => (
-                        <SelectItem key={expense.id} value={expense.id}>
-                          {expense.name} - {formatCurrency(expense.amount)}
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
+              <div className="p-6 border-b border-gray-200/50">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <Plus className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold gradient-text">Add One-Time Expense</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Record a specific expense transaction</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <form onSubmit={handleCreateExpenseEntry} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-foreground">Expense Name</Label>
+                    <div className="relative">
+                      <TrendingDown className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        value={expenseFormData.name}
+                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Medical Bill, Car Repair"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Amount (RM)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenseFormData.amount}
+                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-sm font-semibold text-foreground">Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="date"
+                        type="date"
+                        value={expenseFormData.date}
+                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, date: e.target.value }))}
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-semibold text-foreground">Category</Label>
+                    <Select value={expenseFormData.category} onValueChange={(value) => 
+                      setExpenseFormData(prev => ({ ...prev, category: value }))
+                    }>
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+                        <SelectItem value="FOOD" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Utensils className="h-4 w-4 text-orange-600" />
+                            <span>Food & Dining</span>
+                          </div>
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                        <SelectItem value="TRANSPORTATION" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Car className="h-4 w-4 text-blue-600" />
+                            <span>Transportation</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="HOUSING" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Home className="h-4 w-4 text-green-600" />
+                            <span>Housing & Rent</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="UTILITIES" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Zap className="h-4 w-4 text-yellow-600" />
+                            <span>Utilities</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="SHOPPING" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <ShoppingBag className="h-4 w-4 text-purple-600" />
+                            <span>Shopping</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="HEALTHCARE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Heart className="h-4 w-4 text-red-600" />
+                            <span>Healthcare</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ENTERTAINMENT" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Gamepad2 className="h-4 w-4 text-indigo-600" />
+                            <span>Entertainment</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="BUSINESS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Briefcase className="h-4 w-4 text-gray-600" />
+                            <span>Business</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="OTHER" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Filter className="h-4 w-4 text-gray-400" />
+                            <span>Other</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="amount">Amount (RM)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={expenseFormData.amount}
-                    onChange={(e) => setExpenseFormData(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
+                    <div className="relative">
+                      <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="notes"
+                        value={expenseFormData.notes}
+                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Additional details..."
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <Label htmlFor="month">Month</Label>
-                  <Input
-                    id="month"
-                    type="month"
-                    value={expenseFormData.month}
-                    onChange={(e) => setExpenseFormData(prev => ({ ...prev, month: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Input
-                    id="notes"
-                    value={expenseFormData.notes}
-                    onChange={(e) => setExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Additional notes..."
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowExpenseForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">
-                    Add Entry
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => setShowExpenseForm(false)}
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmittingExpense}
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isSubmittingExpense ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Expense
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

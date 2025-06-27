@@ -15,7 +15,7 @@ export function GoalModal({ isOpen, onClose, goal, onSubmit, isSubmitting }: Goa
 
   return (
     <div 
-      className="fixed inset-0 bg-black/40 backdrop-blur-md z-[150] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4"
       onClick={(e) => {
         // Close modal when clicking on backdrop
         if (e.target === e.currentTarget) {
@@ -24,7 +24,7 @@ export function GoalModal({ isOpen, onClose, goal, onSubmit, isSubmitting }: Goa
       }}
     >
       <div 
-        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto relative z-[101]"
         onClick={(e) => e.stopPropagation()}
       >
         <GoalForm

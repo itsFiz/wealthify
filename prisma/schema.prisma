@@ -86,6 +86,8 @@ model User {
   monthlySnapshots MonthlySnapshot[]
   balanceEntries BalanceEntry[]
   balanceProjections BalanceProjection[]
+  oneTimeIncomes OneTimeIncome[]
+  oneTimeExpenses OneTimeExpense[]
   
   @@map("users")
 }
@@ -154,6 +156,37 @@ model ExpenseEntry {
   expense    Expense  @relation(fields: [expenseId], references: [id])
   
   @@map("expense_entries")
+}
+
+// One-time entries (not linked to recurring income streams/expenses)
+model OneTimeIncome {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   // e.g., "Freelance Project", "Affiliate Commission"
+  amount    Decimal
+  date      DateTime // Specific date of income
+  category  String   // FREELANCE, AFFILIATE, ADSENSE, GIGS, BONUS, GIFT
+  notes     String?
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@map("one_time_income")
+}
+
+model OneTimeExpense {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   // e.g., "Medical Bill", "Car Repair"
+  amount    Decimal
+  date      DateTime // Specific date of expense
+  category  String   // MEDICAL, REPAIRS, PURCHASES, TRAVEL, UNEXPECTED, OTHER
+  notes     String?
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@map("one_time_expense")
 }
 
 // Goals & Milestones
