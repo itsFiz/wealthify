@@ -9,10 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Wallet, ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, CheckCircle, AlertCircle, User, Mail, Lock, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function SignUpPage() {
@@ -40,8 +39,8 @@ export default function SignUpPage() {
       if (result?.ok) {
         router.push('/dashboard');
       }
-    } catch (error) {
-      console.error('Sign up error:', error);
+    } catch {
+      console.error('Sign up error occurred');
     } finally {
       setIsLoading(false);
     }

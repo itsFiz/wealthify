@@ -34,7 +34,11 @@ export async function GET(request: NextRequest) {
     const expenseId = searchParams.get('expenseId');
 
     // Build where clause based on filters
-    const whereClause: any = {
+    const whereClause: {
+      expense: { userId: string };
+      month?: { gte?: Date; lte?: Date };
+      expenseId?: string;
+    } = {
       expense: {
         userId: user.id,
       },
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Only add date filters if they are provided
     if (year || month) {
-      const monthClause: any = {};
+      const monthClause: { gte?: Date; lte?: Date } = {};
       
       if (year && month) {
         // Specific year and month

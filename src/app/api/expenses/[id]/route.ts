@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { createExpenseSchema, updateExpenseSchema } from '@/lib/validations';
-import { updateExpenseEntries, deleteExpenseEntries, generateExpenseEntries } from '@/lib/utils/entryGeneration';
+import { updateExpenseSchema } from '@/lib/validations';
+import { deleteExpenseEntries, generateExpenseEntries } from '@/lib/utils/entryGeneration';
 import { z } from 'zod';
 
 // GET /api/expenses/[id] - Get specific expense
@@ -98,14 +98,14 @@ export async function PUT(
     console.log('✅ Validated expense data:', validatedData);
 
     // Prepare update data with proper date conversion
-    const updateData: any = {
-      ...validatedData,
-      amount: validatedData.amount,
+    const { incurredDate: incurredDateString, ...restValidatedData } = validatedData;
+    const updateData: typeof restValidatedData & { incurredDate?: Date } = {
+      ...restValidatedData,
     };
 
     // Convert incurredDate string to Date object if provided
-    if (validatedData.incurredDate) {
-      updateData.incurredDate = new Date(validatedData.incurredDate);
+    if (incurredDateString) {
+      updateData.incurredDate = new Date(incurredDateString);
       console.log('📅 Converted incurredDate from string to Date:', updateData.incurredDate);
     }
 
@@ -173,7 +173,7 @@ export async function PUT(
     console.error('❌ Error details:', {
       message: (error as Error).message,
       stack: (error as Error).stack,
-      cause: (error as any).cause
+      cause: (error as Error & { cause?: unknown }).cause
     });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

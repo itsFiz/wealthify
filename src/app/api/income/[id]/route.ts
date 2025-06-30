@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { createIncomeStreamSchema, updateIncomeStreamSchema } from '@/lib/validations';
-import { updateIncomeStreamEntries, deleteIncomeStreamEntries } from '@/lib/utils/entryGeneration';
+import { updateIncomeStreamSchema } from '@/lib/validations';
+import { deleteIncomeStreamEntries } from '@/lib/utils/entryGeneration';
 import { z } from 'zod';
 import { generateIncomeEntries } from '@/lib/utils/entryGeneration';
 
@@ -100,15 +100,14 @@ export async function PUT(
     console.log('✅ Validated income stream data:', validatedData);
 
     // Prepare update data with proper date conversion
-    const updateData: any = {
-      ...validatedData,
-      expectedMonthly: validatedData.expectedMonthly,
-      actualMonthly: validatedData.actualMonthly,
+    const { earnedDate: earnedDateString, ...restValidatedData } = validatedData;
+    const updateData: typeof restValidatedData & { earnedDate?: Date } = {
+      ...restValidatedData,
     };
 
     // Convert earnedDate string to Date object if provided
-    if (validatedData.earnedDate) {
-      updateData.earnedDate = new Date(validatedData.earnedDate);
+    if (earnedDateString) {
+      updateData.earnedDate = new Date(earnedDateString);
       console.log('📅 Converted earnedDate from string to Date:', updateData.earnedDate);
     }
 
@@ -180,7 +179,7 @@ export async function PUT(
     console.error('❌ Error details:', {
       message: (error as Error).message,
       stack: (error as Error).stack,
-      cause: (error as any).cause
+      cause: (error as Error & { cause?: unknown }).cause
     });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

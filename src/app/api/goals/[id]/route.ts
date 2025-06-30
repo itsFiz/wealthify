@@ -108,7 +108,7 @@ export async function PUT(
     }
 
     const contentType = request.headers.get('content-type');
-    let body: any;
+    let body: Record<string, unknown>;
     let imageFile: File | null = null;
 
     if (contentType?.includes('multipart/form-data')) {
@@ -133,7 +133,7 @@ export async function PUT(
     // Convert targetDate string back to Date object for validation
     const processedBody = {
       ...body,
-      targetDate: new Date(body.targetDate),
+      targetDate: new Date(body.targetDate as string),
     };
 
     console.log('🔄 Processed goal update data:', processedBody);

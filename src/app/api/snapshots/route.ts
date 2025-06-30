@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/snapshots - Create/update monthly snapshot
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
     

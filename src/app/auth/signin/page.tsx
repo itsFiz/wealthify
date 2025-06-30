@@ -1,25 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Wallet, ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight, Shield, Zap, TrendingUp, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { Mail, Lock } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const message = searchParams.get('message');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -34,7 +30,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       await signIn('google', { callbackUrl: '/dashboard' });
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: 'Google sign-in failed. Please try again.'
@@ -91,7 +87,7 @@ export default function SignInPage() {
           router.push('/dashboard');
         }, 1000);
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: 'An error occurred. Please try again.'
@@ -353,7 +349,7 @@ export default function SignInPage() {
               {/* Footer */}
               <div className="text-center text-sm space-y-2">
                 <div>
-                  <span className="text-muted-foreground">Don't have an account? </span>
+                  <span className="text-muted-foreground">Don&apos;t have an account? </span>
                   <Link 
                     href="/auth/signup" 
                     className="text-primary hover:underline font-medium transition-colors"
