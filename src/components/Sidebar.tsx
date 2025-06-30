@@ -43,23 +43,19 @@ const navigationItems = [
         description: 'Financial overview',
       },
       {
-        name: 'Analytics',
-        href: '/analytics',
-        icon: BarChart3,
-        description: 'Detailed insights',
+        name: 'Reports',
+        href: '/reports',
+        icon: FileText,
+        description: 'Financial reports',
         badge: 'New',
+
       },
     ],
   },
   {
     title: 'Financial Management',
     items: [
-      {
-        name: 'Finances',
-        href: '/finances',
-        icon: Wallet,
-        description: 'Manage all finances',
-      },
+      
       {
         name: 'Entries',
         href: '/entries',
@@ -96,12 +92,7 @@ const navigationItems = [
         icon: Calculator,
         description: 'Affordability calculator',
       },
-      {
-        name: 'Reports',
-        href: '/reports',
-        icon: FileText,
-        description: 'Financial reports',
-      },
+      
       {
         name: 'Achievements',
         href: '/achievements',

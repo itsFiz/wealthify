@@ -31,7 +31,10 @@ import {
   ShoppingBag,
   Heart,
   Gamepad2,
-  Briefcase
+  Briefcase,
+  AlertTriangle,
+  Check,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -87,20 +90,51 @@ export default function EntriesPage() {
   // Form states
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showEditIncomeForm, setShowEditIncomeForm] = useState(false);
+  const [showEditExpenseForm, setShowEditExpenseForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   const [isSubmittingIncome, setIsSubmittingIncome] = useState(false);
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
+  const [isUpdatingIncome, setIsUpdatingIncome] = useState(false);
+  const [isUpdatingExpense, setIsUpdatingExpense] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Edit states
+  const [editingIncomeEntry, setEditingIncomeEntry] = useState<IncomeEntry | null>(null);
+  const [editingExpenseEntry, setEditingExpenseEntry] = useState<ExpenseEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<{ id: string; name: string; type: 'income' | 'expense' } | null>(null);
+
+  // Form data states
   const [incomeFormData, setIncomeFormData] = useState({
     name: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-    category: 'FREELANCE', // Default category
+    date: new Date().toISOString().split('T')[0],
+    category: 'FREELANCE',
     notes: ''
   });
+  
   const [expenseFormData, setExpenseFormData] = useState({
     name: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-    category: 'FOOD', // Default category
+    date: new Date().toISOString().split('T')[0],
+    category: 'FOOD',
+    notes: ''
+  });
+
+  const [editIncomeFormData, setEditIncomeFormData] = useState({
+    name: '',
+    amount: '',
+    date: '',
+    category: '',
+    notes: ''
+  });
+  
+  const [editExpenseFormData, setEditExpenseFormData] = useState({
+    name: '',
+    amount: '',
+    date: '',
+    category: '',
     notes: ''
   });
 
@@ -143,7 +177,7 @@ export default function EntriesPage() {
           id: entry.id,
           name: entry.incomeStream?.name || 'Unknown Income Stream',
           amount: entry.amount,
-          date: new Date(entry.month), // Convert month to date
+          date: new Date(entry.month),
           category: entry.incomeStream?.type || 'OTHER',
           notes: entry.notes,
           createdAt: new Date(entry.createdAt),
@@ -174,7 +208,7 @@ export default function EntriesPage() {
           id: entry.id,
           name: entry.expense?.name || 'Unknown Expense',
           amount: entry.amount,
-          date: new Date(entry.month), // Convert month to date
+          date: new Date(entry.month),
           category: entry.expense?.category || 'OTHER',
           notes: entry.notes,
           createdAt: new Date(entry.createdAt),
@@ -226,7 +260,7 @@ export default function EntriesPage() {
         body: JSON.stringify({
           ...incomeFormData,
           amount: parseFloat(incomeFormData.amount),
-          date: incomeFormData.date, // Use specific date instead of month
+          date: incomeFormData.date,
         }),
       });
 
@@ -268,7 +302,7 @@ export default function EntriesPage() {
         body: JSON.stringify({
           ...expenseFormData,
           amount: parseFloat(expenseFormData.amount),
-          date: expenseFormData.date, // Use specific date instead of month
+          date: expenseFormData.date,
         }),
       });
 
@@ -295,6 +329,170 @@ export default function EntriesPage() {
     }
   };
 
+  // Edit income entry
+  const handleEditIncomeEntry = (entry: IncomeEntry) => {
+    if (!entry.isOneTime) {
+      toast.error('Only one-time entries can be edited');
+      return;
+    }
+    
+    setEditingIncomeEntry(entry);
+    setEditIncomeFormData({
+      name: entry.name,
+      amount: entry.amount.toString(),
+      date: entry.date.toISOString().split('T')[0],
+      category: entry.category || 'FREELANCE',
+      notes: entry.notes || ''
+    });
+    setShowEditIncomeForm(true);
+  };
+
+  // Edit expense entry
+  const handleEditExpenseEntry = (entry: ExpenseEntry) => {
+    if (!entry.isOneTime) {
+      toast.error('Only one-time entries can be edited');
+      return;
+    }
+    
+    setEditingExpenseEntry(entry);
+    setEditExpenseFormData({
+      name: entry.name,
+      amount: entry.amount.toString(),
+      date: entry.date.toISOString().split('T')[0],
+      category: entry.category || 'FOOD',
+      notes: entry.notes || ''
+    });
+    setShowEditExpenseForm(true);
+  };
+
+  // Update income entry
+  const handleUpdateIncomeEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isUpdatingIncome || !editingIncomeEntry) return;
+    
+    setIsUpdatingIncome(true);
+    
+    try {
+      const response = await fetch(`/api/one-time-income/${editingIncomeEntry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editIncomeFormData,
+          amount: parseFloat(editIncomeFormData.amount),
+          date: editIncomeFormData.date,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Income entry updated successfully!');
+        setShowEditIncomeForm(false);
+        setEditingIncomeEntry(null);
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to update income entry');
+      }
+    } catch (error) {
+      console.error('Error updating income entry:', error);
+      toast.error('Failed to update income entry');
+    } finally {
+      setIsUpdatingIncome(false);
+    }
+  };
+
+  // Update expense entry
+  const handleUpdateExpenseEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isUpdatingExpense || !editingExpenseEntry) return;
+    
+    setIsUpdatingExpense(true);
+    
+    try {
+      const response = await fetch(`/api/one-time-expense/${editingExpenseEntry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editExpenseFormData,
+          amount: parseFloat(editExpenseFormData.amount),
+          date: editExpenseFormData.date,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Expense entry updated successfully!');
+        setShowEditExpenseForm(false);
+        setEditingExpenseEntry(null);
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to update expense entry');
+      }
+    } catch (error) {
+      console.error('Error updating expense entry:', error);
+      toast.error('Failed to update expense entry');
+    } finally {
+      setIsUpdatingExpense(false);
+    }
+  };
+
+  // Delete entry
+  const handleDeleteEntry = (entry: IncomeEntry | ExpenseEntry, type: 'income' | 'expense') => {
+    setDeletingEntry({ id: entry.id, name: entry.name, type });
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (!deletingEntry || isDeleting) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      // Determine the endpoint based on entry type
+      let endpoint: string;
+      
+      // Check if this is a one-time entry or recurring entry
+      const isOneTimeEntry = (deletingEntry.type === 'income' && 
+        incomeEntries.find(e => e.id === deletingEntry.id)?.isOneTime) ||
+        (deletingEntry.type === 'expense' && 
+        expenseEntries.find(e => e.id === deletingEntry.id)?.isOneTime);
+      
+      if (isOneTimeEntry) {
+        // One-time entry endpoints
+        endpoint = deletingEntry.type === 'income' 
+          ? `/api/one-time-income/${deletingEntry.id}`
+          : `/api/one-time-expense/${deletingEntry.id}`;
+      } else {
+        // Recurring entry endpoints
+        endpoint = deletingEntry.type === 'income' 
+          ? `/api/income-entries/${deletingEntry.id}`
+          : `/api/expense-entries/${deletingEntry.id}`;
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const entryTypeLabel = isOneTimeEntry ? 'One-time' : 'Recurring';
+        toast.success(`${entryTypeLabel} ${deletingEntry.type} entry deleted successfully!`);
+        setShowDeleteConfirm(false);
+        setDeletingEntry(null);
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to delete entry');
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast.error('Failed to delete entry');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Filter entries based on search term
   const filteredIncomeEntries = incomeEntries.filter(entry =>
     (entry.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -313,8 +511,102 @@ export default function EntriesPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Loading Overlay for Data Refetching */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3">
+              <Loader className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-lg font-medium text-gray-700">Updating data...</span>
+            </div>
+          </div>
+        )}
+
+        <div className="container mx-auto p-6 space-y-8">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-80 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-96"></div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="h-10 bg-gray-200 rounded w-40 animate-pulse"></div>
+              <div className="h-10 bg-gray-200 rounded w-40 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Filters Skeleton */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Summary Cards Skeleton */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-8 bg-gray-200 rounded w-32"></div>
+                    <div className="h-3 bg-gray-200 rounded w-40"></div>
+                  </div>
+                  <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Loading Spinner in Center */}
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-3">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <span className="text-lg font-medium text-gray-700">Loading your financial data...</span>
+            </div>
+          </div>
+
+          {/* Tabs and Content Skeleton */}
+          <div className="space-y-6">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+              <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+            </div>
+            
+            {/* Entry Cards Skeleton */}
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+              </div>
+              <div className="p-6 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg animate-pulse">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                          <div className="h-5 bg-gray-200 rounded w-16"></div>
+                        </div>
+                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                        <div className="h-3 bg-gray-200 rounded w-40"></div>
+                      </div>
+                    </div>
+                    <div className="text-right space-y-2">
+                      <div className="h-6 bg-gray-200 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -332,6 +624,16 @@ export default function EntriesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Loading Overlay for Data Refetching */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3">
+            <Loader className="h-6 w-6 animate-spin text-primary" />
+            <span className="text-lg font-medium text-gray-700">Updating data...</span>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto p-6 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -551,7 +853,7 @@ export default function EntriesPage() {
                 {filteredIncomeEntries.length > 0 ? (
                   <div className="space-y-3">
                     {filteredIncomeEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
+                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
                         <div className="flex items-center space-x-4">
                           <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center">
                             <TrendingUp className="h-5 w-5 text-green-600" />
@@ -584,13 +886,35 @@ export default function EntriesPage() {
                             )}
                           </div>
                         </div>
+                        <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <div className="text-lg font-semibold text-green-600">
                             {formatCurrency(entry.amount)}
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            {entry.category || 'OTHER'}
+                              {entry.category || 'OTHER'}
                           </Badge>
+                          </div>
+                          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {entry.isOneTime && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditIncomeEntry(entry)}
+                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteEntry(entry, 'income')}
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -621,7 +945,7 @@ export default function EntriesPage() {
                 {filteredExpenseEntries.length > 0 ? (
                   <div className="space-y-3">
                     {filteredExpenseEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
+                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
                         <div className="flex items-center space-x-4">
                           <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center">
                             <TrendingDown className="h-5 w-5 text-red-600" />
@@ -654,13 +978,35 @@ export default function EntriesPage() {
                             )}
                           </div>
                         </div>
+                        <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <div className="text-lg font-semibold text-red-600">
                             {formatCurrency(entry.amount)}
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            {entry.category || 'OTHER'}
+                              {entry.category || 'OTHER'}
                           </Badge>
+                          </div>
+                          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {entry.isOneTime && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditExpenseEntry(entry)}
+                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteEntry(entry, 'expense')}
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -692,13 +1038,13 @@ export default function EntriesPage() {
                   <div className="p-2 bg-green-500/10 rounded-lg">
                     <Plus className="h-6 w-6 text-green-600" />
                   </div>
-                  <div>
+                <div>
                     <h3 className="text-xl font-bold gradient-text">Add One-Time Income</h3>
                     <p className="text-sm text-muted-foreground mt-1">Record a specific income transaction</p>
                   </div>
                 </div>
-              </div>
-              
+                </div>
+
               <div className="p-6">
                 <form onSubmit={handleCreateIncomeEntry} className="space-y-6">
                   <div className="space-y-2">
@@ -720,34 +1066,34 @@ export default function EntriesPage() {
                     <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Amount (RM)</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={incomeFormData.amount}
-                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
-                        placeholder="0.00"
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={incomeFormData.amount}
+                    onChange={(e) => setIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
                         className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
-                        required
-                      />
+                    required
+                  />
                     </div>
-                  </div>
+                </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="date" className="text-sm font-semibold text-foreground">Date</Label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
+                  <Input
                         id="date"
                         type="date"
                         value={incomeFormData.date}
                         onChange={(e) => setIncomeFormData(prev => ({ ...prev, date: e.target.value }))}
                         className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
-                        required
-                      />
+                    required
+                  />
                     </div>
-                  </div>
+                </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="category" className="text-sm font-semibold text-foreground">Category</Label>
@@ -802,15 +1148,15 @@ export default function EntriesPage() {
                     <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
                     <div className="relative">
                       <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="notes"
-                        value={incomeFormData.notes}
-                        onChange={(e) => setIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  <Input
+                    id="notes"
+                    value={incomeFormData.notes}
+                    onChange={(e) => setIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
                         className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
-                      />
+                  />
                     </div>
-                  </div>
+                </div>
 
                   <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
                     <Button 
@@ -819,8 +1165,8 @@ export default function EntriesPage() {
                       onClick={() => setShowIncomeForm(false)}
                       className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
                     >
-                      Cancel
-                    </Button>
+                    Cancel
+                  </Button>
                     <Button 
                       type="submit" 
                       disabled={isSubmittingIncome}
@@ -837,9 +1183,9 @@ export default function EntriesPage() {
                           Add Income
                         </>
                       )}
-                    </Button>
-                  </div>
-                </form>
+                  </Button>
+                </div>
+              </form>
               </div>
             </div>
           </div>
@@ -854,7 +1200,7 @@ export default function EntriesPage() {
                   <div className="p-2 bg-red-500/10 rounded-lg">
                     <Plus className="h-6 w-6 text-red-600" />
                   </div>
-                  <div>
+                <div>
                     <h3 className="text-xl font-bold gradient-text">Add One-Time Expense</h3>
                     <p className="text-sm text-muted-foreground mt-1">Record a specific expense transaction</p>
                   </div>
@@ -918,6 +1264,348 @@ export default function EntriesPage() {
                     }>
                       <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
                         <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                      <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+                        <SelectItem value="FOOD" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Utensils className="h-4 w-4 text-orange-600" />
+                            <span>Food & Dining</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="TRANSPORTATION" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Car className="h-4 w-4 text-blue-600" />
+                            <span>Transportation</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="HOUSING" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Home className="h-4 w-4 text-green-600" />
+                            <span>Housing & Rent</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="UTILITIES" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Zap className="h-4 w-4 text-yellow-600" />
+                            <span>Utilities</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="SHOPPING" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <ShoppingBag className="h-4 w-4 text-purple-600" />
+                            <span>Shopping</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="HEALTHCARE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Heart className="h-4 w-4 text-red-600" />
+                            <span>Healthcare</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ENTERTAINMENT" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Gamepad2 className="h-4 w-4 text-indigo-600" />
+                            <span>Entertainment</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="BUSINESS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Briefcase className="h-4 w-4 text-gray-600" />
+                            <span>Business</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="OTHER" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Filter className="h-4 w-4 text-gray-400" />
+                            <span>Other</span>
+                          </div>
+                        </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
+                    <div className="relative">
+                      <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="notes"
+                        value={expenseFormData.notes}
+                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Additional details..."
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => setShowExpenseForm(false)}
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmittingExpense}
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isSubmittingExpense ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Expense
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Income Form Modal */}
+        {showEditIncomeForm && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
+              <div className="p-6 border-b border-gray-200/50">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <Plus className="h-6 w-6 text-green-600" />
+                  </div>
+                <div>
+                    <h3 className="text-xl font-bold gradient-text">Edit One-Time Income</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Update a specific income transaction</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <form onSubmit={handleUpdateIncomeEntry} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-foreground">Income Name</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        value={editIncomeFormData.name}
+                        onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Freelance Project, Affiliate Commission"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Amount (RM)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                        value={editIncomeFormData.amount}
+                        onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                    required
+                  />
+                    </div>
+                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-sm font-semibold text-foreground">Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                        id="date"
+                        type="date"
+                        value={editIncomeFormData.date}
+                        onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, date: e.target.value }))}
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                    required
+                  />
+                    </div>
+                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-semibold text-foreground">Category</Label>
+                    <Select value={editIncomeFormData.category} onValueChange={(value) => 
+                      setEditIncomeFormData(prev => ({ ...prev, category: value }))
+                    }>
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+                        <SelectItem value="FREELANCE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <TrendingUp className="h-4 w-4 text-blue-600" />
+                            <span>Freelance</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="AFFILIATE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                            <span>Affiliate</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ADSENSE" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Eye className="h-4 w-4 text-purple-600" />
+                            <span>AdSense</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="GIGS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <TrendingUp className="h-4 w-4 text-orange-600" />
+                            <span>Gigs</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="BONUS" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <Plus className="h-4 w-4 text-yellow-600" />
+                            <span>Bonus</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="GIFT" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <GiftIcon className="h-4 w-4 text-pink-600" />
+                            <span>Gift</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
+                    <div className="relative">
+                      <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="notes"
+                        value={editIncomeFormData.notes}
+                        onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Additional details..."
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => setShowEditIncomeForm(false)}
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isUpdatingIncome}
+                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isUpdatingIncome ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Update Income
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Expense Form Modal */}
+        {showEditExpenseForm && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
+              <div className="p-6 border-b border-gray-200/50">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <Plus className="h-6 w-6 text-red-600" />
+                  </div>
+                <div>
+                    <h3 className="text-xl font-bold gradient-text">Edit One-Time Expense</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Update a specific expense transaction</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <form onSubmit={handleUpdateExpenseEntry} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-foreground">Expense Name</Label>
+                    <div className="relative">
+                      <TrendingDown className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        value={editExpenseFormData.name}
+                        onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Medical Bill, Car Repair"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-semibold text-foreground">Amount (RM)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editExpenseFormData.amount}
+                        onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-sm font-semibold text-foreground">Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="date"
+                        type="date"
+                        value={editExpenseFormData.date}
+                        onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, date: e.target.value }))}
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-semibold text-foreground">Category</Label>
+                    <Select value={editExpenseFormData.category} onValueChange={(value) => 
+                      setEditExpenseFormData(prev => ({ ...prev, category: value }))
+                    }>
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                        <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
                         <SelectItem value="FOOD" className="cursor-pointer hover:bg-gray-100 focus:bg-gray-100">
@@ -974,52 +1662,131 @@ export default function EntriesPage() {
                             <span>Other</span>
                           </div>
                         </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="notes" className="text-sm font-semibold text-foreground">Notes (optional)</Label>
                     <div className="relative">
                       <Edit className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="notes"
-                        value={expenseFormData.notes}
-                        onChange={(e) => setExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  <Input
+                    id="notes"
+                        value={editExpenseFormData.notes}
+                        onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
                         className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
                       />
                     </div>
-                  </div>
+                </div>
 
                   <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
                     <Button 
                       type="button" 
                       variant="ghost" 
-                      onClick={() => setShowExpenseForm(false)}
+                      onClick={() => setShowEditExpenseForm(false)}
                       className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
                     >
-                      Cancel
-                    </Button>
+                    Cancel
+                  </Button>
                     <Button 
                       type="submit" 
-                      disabled={isSubmittingExpense}
+                      disabled={isUpdatingExpense}
                       className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      {isSubmittingExpense ? (
+                      {isUpdatingExpense ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Adding...
+                          Updating...
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Expense
+                          Update Expense
+                        </>
+                      )}
+                  </Button>
+                </div>
+              </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && deletingEntry && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
+              <div className="p-6 border-b border-gray-200/50">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-red-600">Delete Entry</h3>
+                    <p className="text-sm text-muted-foreground mt-1">This action cannot be undone</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50/80 rounded-lg border border-red-200/60">
+                    {(() => {
+                      const isOneTimeEntry = (deletingEntry.type === 'income' && 
+                        incomeEntries.find(e => e.id === deletingEntry.id)?.isOneTime) ||
+                        (deletingEntry.type === 'expense' && 
+                        expenseEntries.find(e => e.id === deletingEntry.id)?.isOneTime);
+                      
+                      return (
+                        <>
+                          <p className="text-sm text-gray-800">
+                            Are you sure you want to delete <strong className="text-red-600">"{deletingEntry.name}"</strong>?
+                          </p>
+                          <p className="text-xs text-gray-600 mt-2">
+                            {isOneTimeEntry ? (
+                              <>This one-time {deletingEntry.type} entry will be permanently removed from your records.</>
+                            ) : (
+                              <>This will only delete this specific month's {deletingEntry.type} entry. The recurring {deletingEntry.type} stream will remain active and continue generating future entries.</>
+                            )}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeletingEntry(null);
+                      }}
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={confirmDelete}
+                      disabled={isDeleting}
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Entry
                         </>
                       )}
                     </Button>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           </div>

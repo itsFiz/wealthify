@@ -40,7 +40,10 @@ import {
   AlertCircle,
   Menu,
   Edit,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ArrowUpDown,
+  Loader2
 } from 'lucide-react';
 import type { Goal, IncomeStream, Expense } from '@/types';
 
@@ -84,6 +87,179 @@ interface ActionConfirmation {
   isProcessing: boolean;
 }
 
+// Enhanced Skeleton loader components with better animations
+const MetricCardSkeleton = ({ className = "" }: { className?: string }) => (
+  <Card className={`metric-card ${className}`}>
+    <CardContent className="p-6">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-24 animate-pulse"></div>
+          <div className="h-4 w-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="h-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-32 animate-pulse"></div>
+        <div className="flex items-center justify-between">
+          <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-20 animate-pulse"></div>
+          <div className="h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-16 animate-pulse"></div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const GoalCardSkeleton = () => (
+  <Card className="metric-card">
+    <CardContent className="p-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-16 animate-pulse"></div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-full animate-pulse"></div>
+          <div className="h-2 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-full animate-pulse"></div>
+        </div>
+        <div className="flex justify-between text-sm">
+          <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-20 animate-pulse"></div>
+          <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-24 animate-pulse"></div>
+        </div>
+        <div className="h-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-full animate-pulse"></div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const ListItemSkeleton = () => (
+  <div className="border rounded-lg p-3 bg-white/50">
+    <div className="flex justify-between items-start mb-2">
+      <div className="flex items-center space-x-3 flex-1">
+        <div className="w-3 h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full animate-pulse"></div>
+        <div className="space-y-1 flex-1">
+          <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-24 animate-pulse"></div>
+          <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-20 animate-pulse"></div>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-16 animate-pulse mb-1"></div>
+        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-12 animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const FinanceListSkeleton = ({ title, buttonText }: { title: string; buttonText: string }) => (
+  <Card className="metric-card">
+    <CardHeader>
+      <CardTitle className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="h-5 w-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse"></div>
+          <span>{title}</span>
+        </div>
+        <Button size="sm" disabled className="opacity-50">
+          <Plus className="h-4 w-4 mr-2" />
+          {buttonText}
+        </Button>
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <ListItemSkeleton key={i} />
+        ))}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const AnalysisCardSkeleton = () => (
+  <Card className="metric-card">
+    <CardHeader>
+      <CardTitle className="flex items-center space-x-2">
+        <div className="h-5 w-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse"></div>
+        <div className="h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-40 animate-pulse"></div>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-16 animate-pulse"></div>
+          </div>
+        ))}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// Loading Overlay Component
+const LoadingOverlay = ({ children, isLoading, className = "" }: { 
+  children: React.ReactNode; 
+  isLoading: boolean; 
+  className?: string;
+}) => (
+  <div className={`relative ${className}`}>
+    {children}
+    {isLoading && (
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+        <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-lg">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span className="text-sm font-medium text-gray-700">Loading...</span>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+// Inline Loading Spinner
+const InlineLoader = ({ className = "" }: { className?: string }) => (
+  <div className={`flex items-center justify-center ${className}`}>
+    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+  </div>
+);
+
+// Section Loading Component
+const SectionSkeleton = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="space-y-4">
+    <div className="flex items-center space-x-2">
+      <div className="h-6 w-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse"></div>
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+    </div>
+    {children}
+  </div>
+);
+
+// Add sorting interfaces
+interface SortOption {
+  value: string;
+  label: string;
+}
+
+const incomeSortOptions: SortOption[] = [
+  { value: 'name-asc', label: 'Name (A-Z)' },
+  { value: 'name-desc', label: 'Name (Z-A)' },
+  { value: 'amount-desc', label: 'Amount (High to Low)' },
+  { value: 'amount-asc', label: 'Amount (Low to High)' },
+  { value: 'status-active', label: 'Active First' },
+  { value: 'status-inactive', label: 'Inactive First' },
+  { value: 'type-asc', label: 'Type (A-Z)' },
+  { value: 'date-newest', label: 'Newest First' },
+  { value: 'date-oldest', label: 'Oldest First' },
+];
+
+const expenseSortOptions: SortOption[] = [
+  { value: 'name-asc', label: 'Name (A-Z)' },
+  { value: 'name-desc', label: 'Name (Z-A)' },
+  { value: 'amount-desc', label: 'Amount (High to Low)' },
+  { value: 'amount-asc', label: 'Amount (Low to High)' },
+  { value: 'status-active', label: 'Active First' },
+  { value: 'status-inactive', label: 'Inactive First' },
+  { value: 'category-asc', label: 'Category (A-Z)' },
+  { value: 'type-asc', label: 'Type (A-Z)' },
+  { value: 'date-newest', label: 'Newest First' },
+  { value: 'date-oldest', label: 'Oldest First' },
+];
+
 export default function Dashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const {
@@ -111,10 +287,24 @@ export default function Dashboard() {
     removeExpense,
   } = useDashboardStore();
 
+  // Additional loading states for specific operations
+  const [isRefreshingData, setIsRefreshingData] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({
+    balance: false,
+    income: false,
+    expenses: false,
+    goals: false,
+    snapshots: false,
+  });
+
   // Monthly snapshots for trends
   const [currentSnapshot, setCurrentSnapshot] = useState<MonthlySnapshot | null>(null);
   const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [startingBalance, setStartingBalance] = useState<number>(0);
+
+  // Sorting states
+  const [incomeSort, setIncomeSort] = useState<string>('name-asc');
+  const [expenseSort, setExpenseSort] = useState<string>('name-asc');
 
   // Modal states
   const [goalModal, setGoalModal] = useState<{
@@ -196,12 +386,15 @@ export default function Dashboard() {
   // Contribution deletion state
   const [isDeletingContribution, setIsDeletingContribution] = useState<string>('');
 
-  // Fetch user-specific data
+  // Enhanced fetch function with individual loading states
   const fetchUserData = async () => {
     if (!user?.id) return;
 
+    setIsRefreshingData(true);
+
     try {
       // Fetch user balance (starting balance only)
+      setLoadingStates(prev => ({ ...prev, balance: true }));
       const balanceResponse = await fetch('/api/balance');
       let fetchedStartingBalance = 0;
       if (balanceResponse.ok) {
@@ -211,16 +404,16 @@ export default function Dashboard() {
         console.log('💰 Starting balance fetched:', fetchedStartingBalance);
       } else {
         console.log('⚠️ Balance fetch failed:', balanceResponse.status, await balanceResponse.text());
-        // If balance API fails, set default starting balance to 0
         setStartingBalance(0);
       }
+      setLoadingStates(prev => ({ ...prev, balance: false }));
 
       // Fetch income streams
+      setLoadingStates(prev => ({ ...prev, income: true }));
       const incomeResponse = await fetch('/api/income');
       let processedIncome: any[] = [];
       if (incomeResponse.ok) {
         const incomeData = await incomeResponse.json();
-        // Convert Decimal fields to numbers
         processedIncome = incomeData.map((stream: any) => ({
           ...stream,
           expectedMonthly: Number(stream.expectedMonthly),
@@ -228,25 +421,27 @@ export default function Dashboard() {
         }));
         setIncomeStreams(processedIncome);
       }
+      setLoadingStates(prev => ({ ...prev, income: false }));
 
       // Fetch expenses
+      setLoadingStates(prev => ({ ...prev, expenses: true }));
       const expenseResponse = await fetch('/api/expenses');
       let processedExpenses: any[] = [];
       if (expenseResponse.ok) {
         const expenseData = await expenseResponse.json();
-        // Convert Decimal fields to numbers
         processedExpenses = expenseData.map((expense: any) => ({
           ...expense,
           amount: Number(expense.amount),
         }));
         setExpenses(processedExpenses);
       }
+      setLoadingStates(prev => ({ ...prev, expenses: false }));
 
       // Fetch goals
+      setLoadingStates(prev => ({ ...prev, goals: true }));
       const goalsResponse = await fetch('/api/goals');
       if (goalsResponse.ok) {
         const goalsData = await goalsResponse.json();
-        // Convert date strings to Date objects and process other fields
         const processedGoals = goalsData.map((goal: any) => ({
           ...goal,
           targetDate: new Date(goal.targetDate),
@@ -260,37 +455,35 @@ export default function Dashboard() {
         }));
         setGoals(processedGoals);
       }
+      setLoadingStates(prev => ({ ...prev, goals: false }));
 
       // Fetch or create current month snapshot for trends
+      setLoadingStates(prev => ({ ...prev, snapshots: true }));
       await fetchCurrentSnapshot();
+      setLoadingStates(prev => ({ ...prev, snapshots: false }));
 
-      // Calculate proper accumulated balance based on the FETCHED data (not stale React state)
+      // Calculate balance with fetched data
       if (processedIncome.length > 0 || processedExpenses.length > 0) {
         const balanceCalculation = calculateAccumulatedBalance(
-          fetchedStartingBalance, // Use fetched starting balance
-          processedIncome,        // Use locally fetched data
-          processedExpenses       // Use locally fetched data
+          fetchedStartingBalance,
+          processedIncome,
+          processedExpenses
         );
-        
-        // Update the calculated current balance
         setCurrentBalance(balanceCalculation.currentCalculatedBalance);
-        
-        console.log('💰 Balance Calculation (Fixed):', {
-          startingBalance: fetchedStartingBalance,
-          calculatedBalance: balanceCalculation.currentCalculatedBalance,
-          totalAccumulatedIncome: balanceCalculation.totalAccumulatedIncome,
-          totalAccumulatedExpenses: balanceCalculation.totalAccumulatedExpenses,
-          incomeStreamsCount: processedIncome.length,
-          expensesCount: processedExpenses.length,
-          monthlyBreakdown: balanceCalculation.monthlyBreakdown
-        });
       } else {
-        // No income/expenses yet, current balance = starting balance
         setCurrentBalance(fetchedStartingBalance);
-        console.log('💰 Balance Set to Starting Balance:', fetchedStartingBalance);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+    } finally {
+      setIsRefreshingData(false);
+      setLoadingStates({
+        balance: false,
+        income: false,
+        expenses: false,
+        goals: false,
+        snapshots: false,
+      });
     }
   };
 
@@ -565,7 +758,7 @@ export default function Dashboard() {
       if (error instanceof Error && error.message.includes('JSON')) {
         toast.error('Server returned invalid response. Please try again or check console for details.');
       } else {
-        toast.error('Failed to update goal. Please try again.');
+      toast.error('Failed to update goal. Please try again.');
       }
       setGoalModal(prev => ({ ...prev, isSubmitting: false }));
     }
@@ -1175,10 +1368,87 @@ export default function Dashboard() {
     }
   };
 
-  if (authLoading || isLoading) {
+  // Sorting utility functions
+  const sortIncomeStreams = (streams: IncomeStream[], sortBy: string): IncomeStream[] => {
+    return [...streams].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'amount-desc':
+          return (b.actualMonthly || b.expectedMonthly) - (a.actualMonthly || a.expectedMonthly);
+        case 'amount-asc':
+          return (a.actualMonthly || a.expectedMonthly) - (b.actualMonthly || b.expectedMonthly);
+        case 'status-active':
+          if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
+          return a.isActive ? -1 : 1;
+        case 'status-inactive':
+          if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
+          return a.isActive ? 1 : -1;
+        case 'type-asc':
+          return a.type.localeCompare(b.type);
+        case 'date-newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'date-oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const sortExpenses = (expenses: Expense[], sortBy: string): Expense[] => {
+    return [...expenses].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'amount-desc':
+          return b.amount - a.amount;
+        case 'amount-asc':
+          return a.amount - b.amount;
+        case 'status-active':
+          if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
+          return a.isActive ? -1 : 1;
+        case 'status-inactive':
+          if (a.isActive === b.isActive) return a.name.localeCompare(b.name);
+          return a.isActive ? 1 : -1;
+        case 'category-asc':
+          return a.category.localeCompare(b.category);
+        case 'type-asc':
+          return a.type.localeCompare(b.type);
+        case 'date-newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'date-oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        default:
+          return 0;
+      }
+    });
+  };
+
+  // Get sorted data
+  const sortedIncomeStreams = sortIncomeStreams(incomeStreams, incomeSort);
+  const sortedExpenses = sortExpenses(expenses, expenseSort);
+
+  // Manual refresh function
+  const handleRefreshData = async () => {
+    await fetchUserData();
+    toast.success('Dashboard data refreshed!');
+  };
+
+  if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Loading Dashboard</h2>
+            <p className="text-muted-foreground">Authenticating user...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1197,9 +1467,14 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
           <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Dashboard</h2>
           <p className="text-muted-foreground">{error}</p>
+          <Button onClick={handleRefreshData} variant="outline">
+            <Loader2 className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -1208,18 +1483,14 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <div className="container mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8">
-        {/* Header */}
+        {/* Header with refresh button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="sm"
               className="lg:hidden p-2"
-              onClick={() => {
-                // TODO: Implement mobile sidebar toggle
-                console.log('Toggle mobile menu');
-              }}
+              onClick={() => console.log('Toggle mobile menu')}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -1233,403 +1504,491 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs lg:text-sm text-muted-foreground">Last updated</div>
-            <div className="text-xs lg:text-sm font-medium">Just now</div>
-          </div>
-        </div>
-
-        {/* Main Metrics */}
-        <div className="space-y-4">
-          {/* Header with Edit Starting Balance Button */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Financial Overview</h2>
+          <div className="flex items-center space-x-3">
             <Button
               variant="outline"
               size="sm"
-              onClick={openStartingBalanceModal}
-              className="flex items-center space-x-2 bg-white/50 hover:bg-white/70 border-gray-200/60 backdrop-blur-sm"
+              onClick={handleRefreshData}
+              disabled={isRefreshingData || isLoading}
+              className="flex items-center space-x-2"
             >
-              <Edit className="h-4 w-4" />
-              <span>Edit Starting Balance</span>
+              <Loader2 className={`h-4 w-4 ${isRefreshingData ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </Button>
-          </div>
-          
-          {/* Stats Cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-            <DashboardCard
-              title="Current Balance"
-              value={formatCurrency(currentBalance, 'MYR', { 
-                placeholder: 'Set starting balance' 
-              })}
-              subtitle={`Auto-calculated (Start: ${formatCurrency(startingBalance)})`}
-              trend={currentSnapshot?.balanceChangePercent ? {
-                value: Math.abs(currentSnapshot.balanceChangePercent),
-                label: "vs last month",
-                type: currentSnapshot.balanceChangePercent > 0 ? "positive" : "negative"
-              } : undefined}
-              badge={{
-                text: startingBalance === 0 ? "Setup needed" :
-                      currentBalance > safeMonthlyExpenses * 3 ? "Healthy" : 
-                      currentBalance > safeMonthlyExpenses ? "Building" : 
-                      currentBalance > 0 ? "Low" : "Critical",
-                variant: startingBalance === 0 ? "secondary" :
-                        currentBalance > safeMonthlyExpenses * 3 ? "default" : "secondary"
-              }}
-              icon={<Wallet className="h-4 w-4" />}
-              onClick={openStartingBalanceModal}
-            />
-            
-            <DashboardCard
-              title="Monthly Income"
-              value={formatCurrency(safeMonthlyIncome, 'MYR', { 
-                placeholder: 'No income data' 
-              })}
-              subtitle={`${incomeStreams.length} active streams`}
-              trend={formatTrend(currentSnapshot?.incomeChangePercent ?? null, "vs last month")}
-              badge={{
-                text: safeMonthlyIncome > 5000 ? "Strong" : 
-                      safeMonthlyIncome > 0 ? "Building" : "Setup needed",
-                variant: safeMonthlyIncome > 5000 ? "default" : "secondary"
-              }}
-              icon={<TrendingUp className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Monthly Expenses"
-              value={formatCurrency(safeMonthlyExpenses, 'MYR', { 
-                placeholder: 'No expense data' 
-              })}
-              subtitle="Including all categories"
-              trend={formatTrend(currentSnapshot?.expenseChangePercent ? -currentSnapshot.expenseChangePercent : null, "vs last month")}
-              badge={{
-                text: safeBurnRate < 50 ? "Controlled" : 
-                      safeBurnRate > 0 ? "Monitor" : "Setup needed",
-                variant: safeBurnRate < 50 && safeBurnRate > 0 ? "default" : "secondary"
-              }}
-              icon={<TrendingDown className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Monthly Savings"
-              value={formatCurrency(safeTotalSavings, 'MYR', { 
-                placeholder: 'Complete setup' 
-              })}
-              subtitle={`${formatPercentage(safeSavingsRate)} savings rate`}
-              trend={formatTrend(currentSnapshot?.savingsChangePercent ?? null, "vs last month")}
-              badge={{
-                text: safeSavingsRate > 20 ? "Excellent" : 
-                      safeSavingsRate > 10 ? "Good" : 
-                      safeSavingsRate > 0 ? "Improve" : "Setup needed",
-                variant: safeSavingsRate > 20 ? "default" : "secondary"
-              }}
-              icon={<Wallet className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Health Score"
-              value={`${safeHealthScore}/100`}
-              subtitle="Financial wellness"
-              trend={currentSnapshot?.healthScoreChange ? {
-                value: Math.abs(currentSnapshot.healthScoreChange),
-                label: "vs last month",
-                type: currentSnapshot.healthScoreChange > 0 ? "positive" : "negative"
-              } : undefined}
-              badge={{
-                text: safeHealthScore > 70 ? "Great" : 
-                      safeHealthScore > 50 ? "Good" : 
-                      safeHealthScore > 0 ? "Needs Attention" : "Setup needed",
-                variant: safeHealthScore > 70 ? "default" : "secondary"
-              }}
-              icon={<Target className="h-4 w-4" />}
-            />
+            <div className="text-right">
+              <div className="text-xs lg:text-sm text-muted-foreground">
+                {isRefreshingData ? 'Refreshing...' : 'Last updated'}
+              </div>
+              <div className="text-xs lg:text-sm font-medium">
+                {isRefreshingData ? <InlineLoader /> : 'Just now'}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Goals Progress */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Target className="h-6 w-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">
-                Active Goals
-              </h2>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Badge className="bg-primary/20 text-primary border-primary/30">
-                {activeGoals.length} Goals Active
-              </Badge>
-              <Button onClick={openCreateGoalModal} className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/95 hover:to-primary/85 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Goal
+        {/* Main Metrics with enhanced loading */}
+        <LoadingOverlay isLoading={loadingStates.balance}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Financial Overview</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openStartingBalanceModal}
+                className="flex items-center space-x-2 bg-white/50 hover:bg-white/70 border-gray-200/60 backdrop-blur-sm"
+                disabled={isLoading || loadingStates.balance}
+              >
+                {loadingStates.balance ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Edit className="h-4 w-4" />
+                )}
+                <span>Edit Starting Balance</span>
               </Button>
             </div>
-          </div>
-          
-          {activeGoals.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-              {activeGoals.map((goal) => (
-                <div key={goal.id} className="relative group">
-                  <GoalProgressCard
-                    goal={goal}
-                    onAddContribution={() => openContributionModal(goal)}
-                    onViewDetails={() => openGoalDetailsModal(goal)}
+            
+            {/* Stats Cards */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <MetricCardSkeleton key={i} />
+                ))
+              ) : (
+                <>
+                  <DashboardCard
+                    title="Current Balance"
+                    value={formatCurrency(currentBalance, 'MYR', { 
+                      placeholder: 'Set starting balance' 
+                    })}
+                    subtitle={`Auto-calculated (Start: ${formatCurrency(startingBalance)})`}
+                    trend={currentSnapshot?.balanceChangePercent ? {
+                      value: Math.abs(currentSnapshot.balanceChangePercent),
+                      label: "vs last month",
+                      type: currentSnapshot.balanceChangePercent > 0 ? "positive" : "negative"
+                    } : undefined}
+                    badge={{
+                      text: currentBalance === 0 ? "Setup needed" :
+                            currentBalance > safeMonthlyExpenses * 3 ? "Healthy" : 
+                            currentBalance > safeMonthlyExpenses ? "Building" : 
+                            currentBalance > 0 ? "Low" : "Critical",
+                      variant: currentBalance === 0 ? "secondary" :
+                              currentBalance > safeMonthlyExpenses * 3 ? "default" : 
+                              currentBalance > 0 ? "secondary" : "destructive"
+                    }}
+                    icon={<Wallet className="h-4 w-4" />}
+                    onClick={openStartingBalanceModal}
                   />
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex space-x-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEditGoalModal(goal)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openDeleteConfirmation('goal', goal.id, goal.name)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  
+                  <DashboardCard
+                    title="Monthly Income"
+                    value={formatCurrency(safeMonthlyIncome, 'MYR', { 
+                      placeholder: 'No income data' 
+                    })}
+                    subtitle={`${incomeStreams.length} active streams`}
+                    trend={formatTrend(currentSnapshot?.incomeChangePercent ?? null, "vs last month")}
+                    badge={{
+                      text: safeMonthlyIncome > 5000 ? "Strong" : 
+                            safeMonthlyIncome > 0 ? "Building" : "Setup needed",
+                      variant: safeMonthlyIncome > 5000 ? "default" : "secondary"
+                    }}
+                    icon={<TrendingUp className="h-4 w-4" />}
+                  />
+                  
+                  <DashboardCard
+                    title="Monthly Expenses"
+                    value={formatCurrency(safeMonthlyExpenses, 'MYR', { 
+                      placeholder: 'No expense data' 
+                    })}
+                    subtitle="Including all categories"
+                    trend={formatTrend(currentSnapshot?.expenseChangePercent ? -currentSnapshot.expenseChangePercent : null, "vs last month")}
+                    badge={{
+                      text: safeBurnRate < 50 ? "Controlled" : 
+                            safeBurnRate > 0 ? "Monitor" : "Setup needed",
+                      variant: safeBurnRate < 50 && safeBurnRate > 0 ? "default" : "secondary"
+                    }}
+                    icon={<TrendingDown className="h-4 w-4" />}
+                  />
+                  
+                  <DashboardCard
+                    title="Monthly Savings"
+                    value={formatCurrency(safeTotalSavings, 'MYR', { 
+                      placeholder: 'Complete setup' 
+                    })}
+                    subtitle={`${formatPercentage(safeSavingsRate)} savings rate`}
+                    trend={formatTrend(currentSnapshot?.savingsChangePercent ?? null, "vs last month")}
+                    badge={{
+                      text: safeSavingsRate > 20 ? "Excellent" : 
+                            safeSavingsRate > 10 ? "Good" : 
+                            safeSavingsRate > 0 ? "Improve" : "Setup needed",
+                      variant: safeSavingsRate > 20 ? "default" : "secondary"
+                    }}
+                    icon={<Wallet className="h-4 w-4" />}
+                  />
+                  
+                  <DashboardCard
+                    title="Health Score"
+                    value={`${safeHealthScore}/100`}
+                    subtitle="Financial wellness"
+                    trend={currentSnapshot?.healthScoreChange ? {
+                      value: Math.abs(currentSnapshot.healthScoreChange),
+                      label: "vs last month",
+                      type: currentSnapshot.healthScoreChange > 0 ? "positive" : "negative"
+                    } : undefined}
+                    badge={{
+                      text: safeHealthScore > 70 ? "Great" : 
+                            safeHealthScore > 50 ? "Good" : 
+                            safeHealthScore > 0 ? "Needs Attention" : "Setup needed",
+                      variant: safeHealthScore > 70 ? "default" : "secondary"
+                    }}
+                    icon={<Target className="h-4 w-4" />}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </LoadingOverlay>
+
+        {/* Goals Progress with enhanced loading */}
+        <LoadingOverlay isLoading={loadingStates.goals}>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Target className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold text-foreground">Active Goals</h2>
+              </div>
+              <div className="flex items-center space-x-3">
+                {isLoading || loadingStates.goals ? (
+                  <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-20 animate-pulse"></div>
+                ) : (
+                  <Badge className="bg-primary/20 text-primary border-primary/30">
+                    {activeGoals.length} Goals Active
+                  </Badge>
+                )}
+                <Button 
+                  onClick={openCreateGoalModal} 
+                  className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/95 hover:to-primary/85 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold"
+                  disabled={isLoading || loadingStates.goals}
+                >
+                  {loadingStates.goals ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Create Goal
+                </Button>
+              </div>
+            </div>
+            
+            {isLoading || loadingStates.goals ? (
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <GoalCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+                {activeGoals.map((goal) => (
+                  <div key={goal.id} className="relative group">
+                    <GoalProgressCard
+                      goal={goal}
+                      onAddContribution={() => openContributionModal(goal)}
+                      onViewDetails={() => openGoalDetailsModal(goal)}
+                    />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEditGoalModal(goal)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openDeleteConfirmation('goal', goal.id, goal.name)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Card className="metric-card">
-              <CardContent className="p-8 text-center">
-                <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Goals Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start your wealth-building journey by setting your first financial goal.
-                </p>
-                <Button onClick={openCreateGoalModal} className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/95 hover:to-primary/85 shadow-lg hover:shadow-xl hover:shadow-primary/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Goal
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </LoadingOverlay>
 
-        {/* Active Recurring Finance */}
+        {/* Active Recurring Finance with enhanced loading */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Activity className="h-6 w-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">
-                Active Recurring Finance
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground">Active Recurring Finance</h2>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
-                {incomeStreams.filter(s => s.isActive).length} Income Sources
-              </Badge>
-              <Badge className="bg-red-500/20 text-red-700 border-red-500/30">
-                {expenses.filter(e => e.isActive).length} Expenses
-              </Badge>
+              {isLoading || loadingStates.income || loadingStates.expenses ? (
+                <>
+                  <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-24 animate-pulse"></div>
+                  <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded w-20 animate-pulse"></div>
+                </>
+              ) : (
+                <>
+                  <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
+                    {incomeStreams.filter(s => s.isActive).length} Income Sources
+                  </Badge>
+                  <Badge className="bg-red-500/20 text-red-700 border-red-500/30">
+                    {expenses.filter(e => e.isActive).length} Expenses
+                  </Badge>
+                </>
+              )}
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Income Streams */}
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    <span>Income Streams</span>
-                  </div>
-                  <Button size="sm" onClick={openCreateIncomeStreamModal}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Income
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {incomeStreams.length > 0 ? (
-                  <div className="space-y-3">
-                    {incomeStreams.map((stream) => (
-                      <div key={stream.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stream.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium truncate">{stream.name}</span>
-                                {!stream.isActive && (
-                                  <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground">{stream.type} • {stream.frequency}</div>
-                              {stream.earnedDate && (
-                                <div className="text-xs text-muted-foreground">
-                                  Since: {new Date(stream.earnedDate).toLocaleDateString()}
+            {/* Income Streams with loading */}
+            <LoadingOverlay isLoading={loadingStates.income}>
+              {isLoading || loadingStates.income ? (
+                <FinanceListSkeleton title="Income Streams" buttonText="Add Income" />
+              ) : (
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-5 w-5 text-green-500" />
+                        <span>Income Streams</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {/* Sort Dropdown */}
+                        <div className="relative">
+                          <select
+                            value={incomeSort}
+                            onChange={(e) => setIncomeSort(e.target.value)}
+                            className="appearance-none bg-white border border-gray-200 rounded-md px-3 py-1 pr-8 text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                          >
+                            {incomeSortOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        </div>
+                        <Button size="sm" onClick={openCreateIncomeStreamModal}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Income
+                        </Button>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {incomeStreams.length > 0 ? (
+                      <div className="space-y-3">
+                        {sortedIncomeStreams.map((stream) => (
+                          <div key={stream.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stream.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium truncate">{stream.name}</span>
+                                    {!stream.isActive && (
+                                      <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">{stream.type} • {stream.frequency}</div>
+                                  {stream.earnedDate && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Since: {new Date(stream.earnedDate).toLocaleDateString()}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
+                              <div className="text-right flex-shrink-0 ml-4">
+                                <span className="font-semibold text-sm">{formatCurrency(stream.actualMonthly || stream.expectedMonthly)}</span>
+                                <div className="text-xs text-muted-foreground">per month</div>
+                              </div>
+                            </div>
+                            
+                            {/* Action buttons - shown on hover */}
+                            <div className="flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('income', 'edit', stream.id, stream.name)}
+                                className="h-7 w-7 p-0 hover:bg-blue-100"
+                                title="Edit"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('income', 'toggle', stream.id, stream.name, stream.isActive)}
+                                className={`h-7 w-7 p-0 ${stream.isActive ? 'hover:bg-orange-100' : 'hover:bg-green-100'}`}
+                                title={stream.isActive ? "Deactivate temporarily" : "Reactivate"}
+                              >
+                                {stream.isActive ? <AlertCircle className="h-3 w-3 text-orange-600" /> : <Activity className="h-3 w-3 text-green-600" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('income', 'end', stream.id, stream.name)}
+                                className="h-7 w-7 p-0 hover:bg-yellow-100"
+                                title="End income source"
+                              >
+                                <DollarSign className="h-3 w-3 text-yellow-600" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openDeleteConfirmation('income', stream.id, stream.name)}
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-red-100"
+                                title="Delete permanently"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-4">
-                            <span className="font-semibold text-sm">{formatCurrency(stream.actualMonthly || stream.expectedMonthly)}</span>
-                            <div className="text-xs text-muted-foreground">per month</div>
-                          </div>
-                        </div>
-                        
-                        {/* Action buttons - shown on hover */}
-                        <div className="flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('income', 'edit', stream.id, stream.name)}
-                            className="h-7 w-7 p-0 hover:bg-blue-100"
-                            title="Edit"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('income', 'toggle', stream.id, stream.name, stream.isActive)}
-                            className={`h-7 w-7 p-0 ${stream.isActive ? 'hover:bg-orange-100' : 'hover:bg-green-100'}`}
-                            title={stream.isActive ? "Deactivate temporarily" : "Reactivate"}
-                          >
-                            {stream.isActive ? <AlertCircle className="h-3 w-3 text-orange-600" /> : <Activity className="h-3 w-3 text-green-600" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('income', 'end', stream.id, stream.name)}
-                            className="h-7 w-7 p-0 hover:bg-yellow-100"
-                            title="End income source"
-                          >
-                            <DollarSign className="h-3 w-3 text-yellow-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openDeleteConfirmation('income', stream.id, stream.name)}
-                            className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-red-100"
-                            title="Delete permanently"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground mb-3">No income streams added yet.</p>
-                    <Button variant="outline" onClick={openCreateIncomeStreamModal}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Income Stream
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ) : (
+                      <div className="text-center py-6">
+                        <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground mb-3">No income streams added yet.</p>
+                        <Button variant="outline" onClick={openCreateIncomeStreamModal}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Income Stream
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </LoadingOverlay>
 
-            {/* Expenses */}
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <TrendingDown className="h-5 w-5 text-red-500" />
-                    <span>Monthly Expenses</span>
-                  </div>
-                  <Button size="sm" onClick={openCreateExpenseModal}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Expense
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {expenses.length > 0 ? (
-                  <div className="space-y-3">
-                    {expenses.map((expense) => (
-                      <div key={expense.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${expense.isActive ? 'bg-red-500' : 'bg-gray-400'}`} />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium truncate">{expense.name}</span>
-                                {!expense.isActive && (
-                                  <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground">{expense.category} • {expense.type}</div>
-                              {expense.incurredDate && (
-                                <div className="text-xs text-muted-foreground">
-                                  Since: {new Date(expense.incurredDate).toLocaleDateString()}
+            {/* Expenses with loading */}
+            <LoadingOverlay isLoading={loadingStates.expenses}>
+              {isLoading || loadingStates.expenses ? (
+                <FinanceListSkeleton title="Monthly Expenses" buttonText="Add Expense" />
+              ) : (
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <TrendingDown className="h-5 w-5 text-red-500" />
+                        <span>Monthly Expenses</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {/* Sort Dropdown */}
+                        <div className="relative">
+                          <select
+                            value={expenseSort}
+                            onChange={(e) => setExpenseSort(e.target.value)}
+                            className="appearance-none bg-white border border-gray-200 rounded-md px-3 py-1 pr-8 text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                          >
+                            {expenseSortOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        </div>
+                        <Button size="sm" onClick={openCreateExpenseModal}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Expense
+                        </Button>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {expenses.length > 0 ? (
+                      <div className="space-y-3">
+                        {sortedExpenses.map((expense) => (
+                          <div key={expense.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${expense.isActive ? 'bg-red-500' : 'bg-gray-400'}`} />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium truncate">{expense.name}</span>
+                                    {!expense.isActive && (
+                                      <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">{expense.category} • {expense.type}</div>
+                                  {expense.incurredDate && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Since: {new Date(expense.incurredDate).toLocaleDateString()}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
+                              <div className="text-right flex-shrink-0 ml-4">
+                                <span className="font-semibold text-sm">{formatCurrency(expense.amount)}</span>
+                                <div className="text-xs text-muted-foreground">per month</div>
+                              </div>
+                            </div>
+                            
+                            {/* Action buttons - shown on hover */}
+                            <div className="flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('expense', 'edit', expense.id, expense.name)}
+                                className="h-7 w-7 p-0 hover:bg-blue-100"
+                                title="Edit"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('expense', 'toggle', expense.id, expense.name, expense.isActive)}
+                                className={`h-7 w-7 p-0 ${expense.isActive ? 'hover:bg-orange-100' : 'hover:bg-green-100'}`}
+                                title={expense.isActive ? "Deactivate temporarily" : "Reactivate"}
+                              >
+                                {expense.isActive ? <AlertCircle className="h-3 w-3 text-orange-600" /> : <Activity className="h-3 w-3 text-green-600" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openActionConfirmation('expense', 'end', expense.id, expense.name)}
+                                className="h-7 w-7 p-0 hover:bg-yellow-100"
+                                title="End expense"
+                              >
+                                <CreditCard className="h-3 w-3 text-yellow-600" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openDeleteConfirmation('expense', expense.id, expense.name)}
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-red-100"
+                                title="Delete permanently"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-4">
-                            <span className="font-semibold text-sm">{formatCurrency(expense.amount)}</span>
-                            <div className="text-xs text-muted-foreground">per month</div>
-                          </div>
-                        </div>
-                        
-                        {/* Action buttons - shown on hover */}
-                        <div className="flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('expense', 'edit', expense.id, expense.name)}
-                            className="h-7 w-7 p-0 hover:bg-blue-100"
-                            title="Edit"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('expense', 'toggle', expense.id, expense.name, expense.isActive)}
-                            className={`h-7 w-7 p-0 ${expense.isActive ? 'hover:bg-orange-100' : 'hover:bg-green-100'}`}
-                            title={expense.isActive ? "Deactivate temporarily" : "Reactivate"}
-                          >
-                            {expense.isActive ? <AlertCircle className="h-3 w-3 text-orange-600" /> : <Activity className="h-3 w-3 text-green-600" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openActionConfirmation('expense', 'end', expense.id, expense.name)}
-                            className="h-7 w-7 p-0 hover:bg-yellow-100"
-                            title="End expense"
-                          >
-                            <CreditCard className="h-3 w-3 text-yellow-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openDeleteConfirmation('expense', expense.id, expense.name)}
-                            className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-red-100"
-                            title="Delete permanently"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <TrendingDown className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground mb-3">No expenses added yet.</p>
-                    <Button variant="outline" className="mt-2" onClick={openCreateExpenseModal}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Expense
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ) : (
+                      <div className="text-center py-6">
+                        <TrendingDown className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground mb-3">No expenses added yet.</p>
+                        <Button variant="outline" className="mt-2" onClick={openCreateExpenseModal}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Expense
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </LoadingOverlay>
           </div>
         </div>
 
@@ -1643,69 +2002,80 @@ export default function Dashboard() {
           </div>
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <DashboardCard
-              title="Burn Rate"
-              value={`${burnRate.toFixed(1)}%`}
-              subtitle="Expenses vs income"
-              trend={{
-                value: -2.1,
-                label: "vs last month",
-                type: "positive"
-              }}
-              badge={{
-                text: burnRate < 40 ? "Healthy" : burnRate < 60 ? "Moderate" : "High",
-                variant: burnRate < 40 ? "default" : burnRate < 60 ? "secondary" : "destructive"
-              }}
-              icon={<Flame className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Required Income"
-              value={formatCurrency(monthlyExpenses / 0.8)}
-              subtitle="For current lifestyle"
-              trend={{
-                value: -5.2,
-                label: "optimization",
-                type: "positive"
-              }}
-              badge={{
-                text: "Optimized",
-                variant: "secondary"
-              }}
-              icon={<DollarSign className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Emergency Fund"
-              value={`${Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months`}
-              subtitle="Current runway"
-              trend={{
-                value: 0.3,
-                label: "vs target",
-                type: "positive"
-              }}
-              badge={{
-                text: safeTotalSavings / monthlyExpenses >= 6 ? "Complete" : "Building",
-                variant: safeTotalSavings / monthlyExpenses >= 6 ? "default" : "secondary"
-              }}
-              icon={<Shield className="h-4 w-4" />}
-            />
-            
-            <DashboardCard
-              title="Debt Ratio"
-              value="12.5%"
-              subtitle="Debt to income"
-              trend={{
-                value: -8.3,
-                label: "vs last year",
-                type: "positive"
-              }}
-              badge={{
-                text: "Low Risk",
-                variant: "default"
-              }}
-              icon={<CreditCard className="h-4 w-4" />}
-            />
+            {isLoading ? (
+              <>
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+              </>
+            ) : (
+              <>
+                <DashboardCard
+                  title="Burn Rate"
+                  value={`${burnRate.toFixed(1)}%`}
+                  subtitle="Expenses vs income"
+                  trend={{
+                    value: -2.1,
+                    label: "vs last month",
+                    type: "positive"
+                  }}
+                  badge={{
+                    text: burnRate < 40 ? "Healthy" : burnRate < 60 ? "Moderate" : "High",
+                    variant: burnRate < 40 ? "default" : burnRate < 60 ? "secondary" : "destructive"
+                  }}
+                  icon={<Flame className="h-4 w-4" />}
+                />
+                
+                <DashboardCard
+                  title="Required Income"
+                  value={formatCurrency(monthlyExpenses / 0.8)}
+                  subtitle="For current lifestyle"
+                  trend={{
+                    value: -5.2,
+                    label: "optimization",
+                    type: "positive"
+                  }}
+                  badge={{
+                    text: "Optimized",
+                    variant: "secondary"
+                  }}
+                  icon={<DollarSign className="h-4 w-4" />}
+                />
+                
+                <DashboardCard
+                  title="Emergency Fund"
+                  value={`${Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months`}
+                  subtitle="Current runway"
+                  trend={{
+                    value: 0.3,
+                    label: "vs target",
+                    type: "positive"
+                  }}
+                  badge={{
+                    text: safeTotalSavings / monthlyExpenses >= 6 ? "Complete" : "Building",
+                    variant: safeTotalSavings / monthlyExpenses >= 6 ? "default" : "secondary"
+                  }}
+                  icon={<Shield className="h-4 w-4" />}
+                />
+                
+                <DashboardCard
+                  title="Debt Ratio"
+                  value="12.5%"
+                  subtitle="Debt to income"
+                  trend={{
+                    value: -8.3,
+                    label: "vs last year",
+                    type: "positive"
+                  }}
+                  badge={{
+                    text: "Low Risk",
+                    variant: "default"
+                  }}
+                  icon={<CreditCard className="h-4 w-4" />}
+                />
+              </>
+            )}
           </div>
         </div>
 
@@ -1719,96 +2089,107 @@ export default function Dashboard() {
           </div>
           
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
-                  <span>Monthly Burn Analysis</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm font-medium">Current Burn Rate</span>
-                    <span className="text-lg font-bold text-orange-500">{burnRate.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg">
-                    <span className="text-sm font-medium">Recommended Max</span>
-                    <span className="text-lg font-bold text-green-500">50%</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-500/10 rounded-lg">
-                    <span className="text-sm font-medium">Optimal Range</span>
-                    <span className="text-lg font-bold text-blue-500">30-40%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {isLoading ? (
+              <>
+                <AnalysisCardSkeleton />
+                <AnalysisCardSkeleton />
+              </>
+            ) : (
+              <>
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      <span>Monthly Burn Analysis</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                        <span className="text-sm font-medium">Current Burn Rate</span>
+                        <span className="text-lg font-bold text-orange-500">{burnRate.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg">
+                        <span className="text-sm font-medium">Recommended Max</span>
+                        <span className="text-lg font-bold text-green-500">50%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-blue-500/10 rounded-lg">
+                        <span className="text-sm font-medium">Optimal Range</span>
+                        <span className="text-lg font-bold text-blue-500">30-40%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calculator className="h-5 w-5 text-blue-500" />
-                  <span>Lifestyle Projections</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>If income drops 20%</span>
-                      <span className="font-semibold text-red-500">{((monthlyExpenses / (monthlyIncome * 0.8)) * 100).toFixed(1)}% burn</span>
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Calculator className="h-5 w-5 text-blue-500" />
+                      <span>Lifestyle Projections</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>If income drops 20%</span>
+                          <span className="font-semibold text-red-500">{((monthlyExpenses / (monthlyIncome * 0.8)) * 100).toFixed(1)}% burn</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>If expenses rise 15%</span>
+                          <span className="font-semibold text-orange-500">{(((monthlyExpenses * 1.15) / monthlyIncome) * 100).toFixed(1)}% burn</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Emergency fund runway</span>
+                          <span className="font-semibold text-green-500">{Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months</span>
+                        </div>
+                      </div>
+                      <div className="mt-4 p-3 bg-blue-500/10 rounded-lg">
+                        <div className="text-sm font-medium text-blue-700 mb-1">
+                          Income needed for 6-month emergency fund:
+                        </div>
+                        <div className="text-lg font-bold text-blue-600">
+                          {formatCurrency(monthlyExpenses * 6)}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>If expenses rise 15%</span>
-                      <span className="font-semibold text-orange-500">{(((monthlyExpenses * 1.15) / monthlyIncome) * 100).toFixed(1)}% burn</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Emergency fund runway</span>
-                      <span className="font-semibold text-green-500">{Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg">
-                    <div className="text-sm font-medium text-blue-700 mb-1">
-                      Income needed for 6-month emergency fund:
-                    </div>
-                    <div className="text-lg font-bold text-blue-600">
-                      {formatCurrency(monthlyExpenses * 6)}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
           
           {/* Detailed Lifestyle Analysis */}
-          <div className="mt-8">
-            <LifestyleAnalysisCard 
-              title="Comprehensive Lifestyle Analysis"
-              data={{
-                requiredIncome: (monthlyExpenses / 0.8), // 20% savings rate
-                currentIncome: monthlyIncome,
-                emergencyRunwayMonths: Math.max(0, safeTotalSavings / monthlyExpenses),
-                burnRate: burnRate,
-                scenarios: {
-                  current: burnRate,
-                  incomeDown20: (monthlyExpenses / (monthlyIncome * 0.8)) * 100,
-                  incomeDown30: (monthlyExpenses / (monthlyIncome * 0.7)) * 100,
-                  expensesUp15: ((monthlyExpenses * 1.15) / monthlyIncome) * 100,
-                  expensesUp25: ((monthlyExpenses * 1.25) / monthlyIncome) * 100,
-                },
-                affordability: burnRate < 40 ? 'excellent' : burnRate < 60 ? 'good' : burnRate < 80 ? 'tight' : 'stressed',
-                riskLevel: burnRate < 40 ? 'low' : burnRate < 60 ? 'moderate' : burnRate < 80 ? 'high' : 'critical',
-                recommendations: [
-                  burnRate > 60 ? 'Consider reducing monthly expenses' : 'Maintain current spending habits',
-                  safeTotalSavings / monthlyExpenses < 3 ? 'Build emergency fund to 3-6 months' : 'Emergency fund is healthy',
-                  incomeStreams.length < 2 ? 'Diversify income sources for stability' : 'Good income diversification',
-                  savingsRate < 20 ? 'Increase savings rate to 20%+' : 'Excellent savings discipline',
-                ]
-              }}
-              incomeStreams={incomeStreams}
-              expenses={expenses}
-            />
-          </div>
+          {!isLoading && (
+            <div className="mt-8">
+              <LifestyleAnalysisCard 
+                title="Comprehensive Lifestyle Analysis"
+                data={{
+                  requiredIncome: (monthlyExpenses / 0.8), // 20% savings rate
+                  currentIncome: monthlyIncome,
+                  emergencyRunwayMonths: Math.max(0, safeTotalSavings / monthlyExpenses),
+                  burnRate: burnRate,
+                  scenarios: {
+                    current: burnRate,
+                    incomeDown20: (monthlyExpenses / (monthlyIncome * 0.8)) * 100,
+                    incomeDown30: (monthlyExpenses / (monthlyIncome * 0.7)) * 100,
+                    expensesUp15: ((monthlyExpenses * 1.15) / monthlyIncome) * 100,
+                    expensesUp25: ((monthlyExpenses * 1.25) / monthlyIncome) * 100,
+                  },
+                  affordability: burnRate < 40 ? 'excellent' : burnRate < 60 ? 'good' : burnRate < 80 ? 'tight' : 'stressed',
+                  riskLevel: burnRate < 40 ? 'low' : burnRate < 60 ? 'moderate' : burnRate < 80 ? 'high' : 'critical',
+                  recommendations: [
+                    burnRate > 60 ? 'Consider reducing monthly expenses' : 'Maintain current spending habits',
+                    safeTotalSavings / monthlyExpenses < 3 ? 'Build emergency fund to 3-6 months' : 'Emergency fund is healthy',
+                    incomeStreams.length < 2 ? 'Diversify income sources for stability' : 'Good income diversification',
+                    savingsRate < 20 ? 'Increase savings rate to 20%+' : 'Excellent savings discipline',
+                  ]
+                }}
+                incomeStreams={incomeStreams}
+                expenses={expenses}
+              />
+            </div>
+          )}
         </div>
 
         {/* Balance Projections */}
@@ -1821,67 +2202,76 @@ export default function Dashboard() {
           </div>
           
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  <span>Financial Runway</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm font-medium">Current Balance</span>
-                    <span className="text-lg font-bold text-primary">{formatCurrency(currentBalance)}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-500/10 rounded-lg">
-                    <span className="text-sm font-medium">Monthly Net Flow</span>
-                    <span className={`text-lg font-bold ${safeTotalSavings >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {safeTotalSavings >= 0 ? '+' : ''}{formatCurrency(safeTotalSavings)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-orange-500/10 rounded-lg">
-                    <span className="text-sm font-medium">Runway (Current Expenses)</span>
-                    <span className="text-lg font-bold text-orange-500">
-                      {safeMonthlyExpenses > 0 ? `${(currentBalance / safeMonthlyExpenses).toFixed(1)} months` : '∞'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="metric-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calculator className="h-5 w-5 text-green-500" />
-                  <span>Next 6 Months Projection</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[1, 2, 3, 6].map((month) => {
-                    const projectedBalance = currentBalance + (safeTotalSavings * month);
-                    const monthName = new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-                    return (
-                      <div key={month} className="flex justify-between text-sm">
-                        <span>{monthName}</span>
-                        <span className={`font-semibold ${projectedBalance >= currentBalance ? 'text-green-500' : 'text-red-500'}`}>
-                          {formatCurrency(projectedBalance)}
+            {isLoading ? (
+              <>
+                <AnalysisCardSkeleton />
+                <AnalysisCardSkeleton />
+              </>
+            ) : (
+              <>
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <TrendingUp className="h-5 w-5 text-blue-500" />
+                      <span>Financial Runway</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                        <span className="text-sm font-medium">Current Balance</span>
+                        <span className="text-lg font-bold text-primary">{formatCurrency(currentBalance)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-blue-500/10 rounded-lg">
+                        <span className="text-sm font-medium">Monthly Net Flow</span>
+                        <span className={`text-lg font-bold ${safeTotalSavings >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {safeTotalSavings >= 0 ? '+' : ''}{formatCurrency(safeTotalSavings)}
                         </span>
                       </div>
-                    );
-                  })}
-                  <div className="mt-4 p-3 bg-green-500/10 rounded-lg">
-                    <div className="text-sm font-medium text-green-700 mb-1">
-                      Projected 6-month balance:
+                      <div className="flex justify-between items-center p-3 bg-orange-500/10 rounded-lg">
+                        <span className="text-sm font-medium">Runway (Current Expenses)</span>
+                        <span className="text-lg font-bold text-orange-500">
+                          {safeMonthlyExpenses > 0 ? `${(currentBalance / safeMonthlyExpenses).toFixed(1)} months` : '∞'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-lg font-bold text-green-600">
-                      {formatCurrency(currentBalance + (safeTotalSavings * 6))}
+                  </CardContent>
+                </Card>
+
+                <Card className="metric-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Calculator className="h-5 w-5 text-green-500" />
+                      <span>Next 6 Months Projection</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {[1, 2, 3, 6].map((month) => {
+                        const projectedBalance = currentBalance + (safeTotalSavings * month);
+                        const monthName = new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
+                        return (
+                          <div key={month} className="flex justify-between text-sm">
+                            <span>{monthName}</span>
+                            <span className={`font-semibold ${projectedBalance >= currentBalance ? 'text-green-500' : 'text-red-500'}`}>
+                              {formatCurrency(projectedBalance)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      <div className="mt-4 p-3 bg-green-500/10 rounded-lg">
+                        <div className="text-sm font-medium text-green-700 mb-1">
+                          Projected 6-month balance:
+                        </div>
+                        <div className="text-lg font-bold text-green-600">
+                          {formatCurrency(currentBalance + (safeTotalSavings * 6))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         </div>
       </div>

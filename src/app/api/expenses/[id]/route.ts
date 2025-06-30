@@ -129,12 +129,12 @@ export async function PUT(
     const newIncurredDate = validatedData.incurredDate ? new Date(validatedData.incurredDate) : null;
     const incurredDateChanged = (oldIncurredDate?.getTime() !== newIncurredDate?.getTime());
     
-    const oldAmount = Number(existingExpense.amount);
+      const oldAmount = Number(existingExpense.amount);
     const newAmount = validatedData.amount !== undefined ? Number(validatedData.amount) : oldAmount;
     const amountChanged = validatedData.amount !== undefined && (newAmount !== oldAmount);
 
     if (incurredDateChanged || amountChanged) {
-      try {
+        try {
         console.log('🔄 Regenerating entries due to changes:');
         console.log(`   - Incurred date changed: ${incurredDateChanged} (${oldIncurredDate?.toLocaleDateString() || 'null'} → ${newIncurredDate?.toLocaleDateString() || 'null'})`);
         console.log(`   - Amount changed: ${amountChanged} (RM${oldAmount} → RM${newAmount})`);
@@ -146,7 +146,7 @@ export async function PUT(
         // Regenerate entries with new date/amount
         const generateResult = await generateExpenseEntries(params.id);
         console.log(`✅ ${generateResult.message}`);
-      } catch (entryError) {
+        } catch (entryError) {
         console.error('❌ Failed to regenerate expense entries:', entryError);
         // Don't fail the entire request if entry regeneration fails
       }

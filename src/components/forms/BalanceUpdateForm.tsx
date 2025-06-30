@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, DollarSign } from 'lucide-react';
+import { Wallet, DollarSign, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations/index';
 
 interface BalanceUpdateFormProps {
@@ -20,7 +20,7 @@ export function BalanceUpdateForm({
   isSubmitting = false 
 }: BalanceUpdateFormProps) {
   const [formData, setFormData] = useState({
-    balance: currentBalance,
+    balance: 0, // Start with 0 for starting balance
     notes: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,7 +29,7 @@ export function BalanceUpdateForm({
     const newErrors: Record<string, string> = {};
 
     if (formData.balance < 0) {
-      newErrors.balance = 'Balance cannot be negative';
+      newErrors.balance = 'Starting balance cannot be negative';
     }
 
     if (formData.notes && formData.notes.length > 500) {
@@ -50,7 +50,7 @@ export function BalanceUpdateForm({
     try {
       await onSubmit(formData);
     } catch (error) {
-      console.error('Error updating balance:', error);
+      console.error('Error updating starting balance:', error);
     }
   };
 
@@ -62,27 +62,41 @@ export function BalanceUpdateForm({
     }
   };
 
-  const balanceChange = formData.balance - currentBalance;
-
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Wallet className="h-6 w-6 text-primary" />
-          <span>Update Current Balance</span>
+          <span>Set Starting Balance</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Current Balance Display */}
-          <div className="bg-muted/30 p-4 rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
-            <div className="text-lg font-semibold">{formatCurrency(currentBalance)}</div>
+          {/* Info Message */}
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-700">
+                <div className="font-medium mb-1">Set Your Starting Balance</div>
+                <div>This is your account balance before any income or expenses are added. Your current balance will be automatically calculated based on this starting amount plus all your recorded income and expenses.</div>
+              </div>
+            </div>
           </div>
 
-          {/* New Balance Input */}
+          {/* Current Calculated Balance Display (if available) */}
+          {currentBalance > 0 && (
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <div className="text-sm text-muted-foreground mb-1">Current Calculated Balance</div>
+              <div className="text-lg font-semibold">{formatCurrency(currentBalance)}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                This will be recalculated after updating starting balance
+              </div>
+            </div>
+          )}
+
+          {/* Starting Balance Input */}
           <div className="space-y-2">
-            <Label htmlFor="balance">New Balance (RM)</Label>
+            <Label htmlFor="balance">Starting Balance (RM)</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -99,18 +113,10 @@ export function BalanceUpdateForm({
             {errors.balance && (
               <p className="text-sm text-destructive">{errors.balance}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+              Enter the amount you had in your account before tracking income and expenses
+            </p>
           </div>
-
-          {/* Balance Change Display */}
-          {balanceChange !== 0 && (
-            <div className={`p-3 rounded-lg ${
-              balanceChange > 0 ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'
-            }`}>
-              <div className="text-sm font-medium">
-                {balanceChange > 0 ? 'Increase' : 'Decrease'}: {formatCurrency(Math.abs(balanceChange))}
-              </div>
-            </div>
-          )}
 
           {/* Notes */}
           <div className="space-y-2">
@@ -119,7 +125,7 @@ export function BalanceUpdateForm({
               id="notes"
               value={formData.notes}
               onChange={(e) => updateFormData('notes', e.target.value)}
-              placeholder="e.g., Received salary, paid bills, etc."
+              placeholder="e.g., Initial savings, account opening balance, etc."
               className={errors.notes ? 'border-destructive' : ''}
             />
             {errors.notes && (
@@ -141,7 +147,7 @@ export function BalanceUpdateForm({
                 </>
               ) : (
                 <>
-                  Update Balance
+                  Set Starting Balance
                 </>
               )}
             </Button>

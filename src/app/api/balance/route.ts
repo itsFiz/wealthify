@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/balance - Update user's balance
+// POST /api/balance - Update user's starting balance
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -73,38 +73,39 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = updateStartingBalanceSchema.parse(body);
 
-    const previousBalance = Number(user.currentBalance);
-    const newBalance = validatedData.startingBalance;
-    const changeAmount = newBalance - previousBalance;
+    const previousStartingBalance = Number(user.startingBalance || 0);
+    const newStartingBalance = validatedData.startingBalance;
+    const changeAmount = newStartingBalance - previousStartingBalance;
 
-    // Update user's current balance
+    // Update user's starting balance (NOT current balance)
+    // The current balance will be recalculated on the frontend based on
+    // starting balance + accumulated income - accumulated expenses
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
-        currentBalance: newBalance,
+        startingBalance: newStartingBalance,
         balanceUpdatedAt: new Date(),
-        // Set starting balance if this is the first update
-        startingBalance: user.startingBalance.equals(0) ? newBalance : user.startingBalance,
       },
     });
 
-    // Create balance entry for tracking
+    // Create balance entry for tracking starting balance changes
     const balanceEntry = await prisma.balanceEntry.create({
       data: {
         userId: user.id,
-        amount: newBalance,
-        previousAmount: previousBalance,
+        amount: newStartingBalance,
+        previousAmount: previousStartingBalance,
         changeAmount: changeAmount,
         entryType: 'MANUAL_UPDATE',
-        notes: validatedData.notes,
+        notes: validatedData.notes || 'Starting balance updated',
       },
     });
 
     // Convert Decimal fields to numbers for JSON serialization
     const response = {
-      currentBalance: Number(updatedUser.currentBalance),
-      previousBalance,
+      startingBalance: Number(updatedUser.startingBalance),
+      previousStartingBalance,
       changeAmount,
+      balanceUpdatedAt: updatedUser.balanceUpdatedAt,
       balanceEntry: {
         ...balanceEntry,
         amount: Number(balanceEntry.amount),
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
     }
     
-    console.error('Error updating balance:', error);
+    console.error('Error updating starting balance:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
