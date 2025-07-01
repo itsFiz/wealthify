@@ -14,8 +14,7 @@ import {
   CheckCircle,
   ArrowRight,
   Star,
-  Shield,
-  Sparkles
+  Shield
 } from 'lucide-react'
 
 export default function HomePage() {
