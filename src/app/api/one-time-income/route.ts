@@ -33,14 +33,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year');
     const month = searchParams.get('month');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     // Build where clause based on filters
     const whereClause: Prisma.OneTimeIncomeWhereInput = {
       userId: user.id,
     };
 
-    // Only add date filters if they are provided
-    if (year || month) {
+    // Handle date filtering
+    if (startDate && endDate) {
+      // Date range filtering
+      whereClause.date = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (year || month) {
+      // Legacy year/month filtering
       const dateClause: Prisma.DateTimeFilter = {};
       
       if (year && month) {

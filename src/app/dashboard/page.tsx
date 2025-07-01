@@ -334,6 +334,7 @@ export default function Dashboard() {
     setIncomeStreams,
     setExpenses,
     setGoals,
+    setCurrentBalance: setStoreCurrentBalance,
     addGoal,
     updateGoal,
     removeGoal,
@@ -544,8 +545,10 @@ export default function Dashboard() {
           processedExpenses
         );
         setCurrentBalance(balanceCalculation.currentCalculatedBalance);
+        setStoreCurrentBalance(balanceCalculation.currentCalculatedBalance);
       } else {
         setCurrentBalance(fetchedStartingBalance);
+        setStoreCurrentBalance(fetchedStartingBalance);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -559,7 +562,7 @@ export default function Dashboard() {
         snapshots: false,
       });
     }
-  }, [user?.id, setIncomeStreams, setExpenses, setGoals, setStartingBalance, setCurrentBalance]);
+  }, [user?.id, setIncomeStreams, setExpenses, setGoals, setStartingBalance, setCurrentBalance, setStoreCurrentBalance]);
 
   // Fetch current month snapshot for trend data
   const fetchCurrentSnapshot = async () => {
@@ -2244,7 +2247,7 @@ export default function Dashboard() {
                 
                 <DashboardCard
                   title="Emergency Fund"
-                  value={`${Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months`}
+                  value={`${Math.max(0, currentBalance / monthlyExpenses).toFixed(1)} months`}
                   subtitle="Current runway"
                   trend={{
                     value: 0.3,
@@ -2252,8 +2255,8 @@ export default function Dashboard() {
                     type: "positive"
                   }}
                   badge={{
-                    text: safeTotalSavings / monthlyExpenses >= 6 ? "Complete" : "Building",
-                    variant: safeTotalSavings / monthlyExpenses >= 6 ? "default" : "secondary"
+                    text: currentBalance / monthlyExpenses >= 6 ? "Complete" : "Building",
+                    variant: currentBalance / monthlyExpenses >= 6 ? "default" : "secondary"
                   }}
                   icon={<Shield className="h-4 w-4" />}
                 />
@@ -2340,7 +2343,7 @@ export default function Dashboard() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Emergency fund runway</span>
-                          <span className="font-semibold text-green-500">{Math.max(0, safeTotalSavings / monthlyExpenses).toFixed(1)} months</span>
+                          <span className="font-semibold text-green-500">{Math.max(0, currentBalance / monthlyExpenses).toFixed(1)} months</span>
                         </div>
                       </div>
                       <div className="mt-4 p-3 bg-blue-500/10 rounded-lg">
@@ -2366,7 +2369,7 @@ export default function Dashboard() {
                 data={{
                   requiredIncome: (monthlyExpenses / 0.8), // 20% savings rate
                   currentIncome: monthlyIncome,
-                  emergencyRunwayMonths: Math.max(0, safeTotalSavings / monthlyExpenses),
+                  emergencyRunwayMonths: Math.max(0, currentBalance / monthlyExpenses),
                   burnRate: burnRate,
                   scenarios: {
                     current: burnRate,
@@ -2379,7 +2382,7 @@ export default function Dashboard() {
                   riskLevel: burnRate < 40 ? 'low' : burnRate < 60 ? 'moderate' : burnRate < 80 ? 'high' : 'critical',
                   recommendations: [
                     burnRate > 60 ? 'Consider reducing monthly expenses' : 'Maintain current spending habits',
-                    safeTotalSavings / monthlyExpenses < 3 ? 'Build emergency fund to 3-6 months' : 'Emergency fund is healthy',
+                    currentBalance / monthlyExpenses < 3 ? 'Build emergency fund to 3-6 months' : 'Emergency fund is healthy',
                     incomeStreams.length < 2 ? 'Diversify income sources for stability' : 'Good income diversification',
                     savingsRate < 20 ? 'Increase savings rate to 20%+' : 'Excellent savings discipline',
                   ]

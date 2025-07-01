@@ -129,7 +129,7 @@ export default function EntriesPage() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'custom' | 'preset'>('preset');
-  const [presetFilter, setPresetFilter] = useState<'current-month' | 'last-3-months' | 'last-6-months' | 'last-year' | 'all-time'>('current-month');
+  const [presetFilter, setPresetFilter] = useState<'current-month' | 'last-3-months' | 'last-6-months' | 'last-year' | 'all-time'>('all-time');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   
@@ -205,6 +205,7 @@ export default function EntriesPage() {
               params.append('month', currentMonth.toString());
               break;
             case 'last-3-months':
+              // Fix: Calculate exactly 3 months ago
               const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
               params.append('startDate', threeMonthsAgo.toISOString().split('T')[0]);
               params.append('endDate', now.toISOString().split('T')[0]);

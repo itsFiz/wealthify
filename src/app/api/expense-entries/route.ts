@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 const createExpenseEntrySchema = z.object({
   expenseId: z.string(),
@@ -31,21 +32,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year');
     const month = searchParams.get('month');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
     const expenseId = searchParams.get('expenseId');
 
     // Build where clause based on filters
-    const whereClause: {
-      expense: { userId: string };
-      month?: { gte?: Date; lte?: Date };
-      expenseId?: string;
-    } = {
+    const whereClause: Prisma.ExpenseEntryWhereInput = {
       expense: {
         userId: user.id,
       },
     };
 
-    // Only add date filters if they are provided
-    if (year || month) {
+    // Handle date filtering
+    if (startDate && endDate) {
+      // Date range filtering
+      whereClause.month = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (year || month) {
+      // Legacy year/month filtering
       const monthClause: { gte?: Date; lte?: Date } = {};
       
       if (year && month) {

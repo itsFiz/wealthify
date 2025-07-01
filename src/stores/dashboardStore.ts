@@ -60,6 +60,7 @@ interface DashboardState {
   incomeStreams: IncomeStream[];
   expenses: Expense[];
   goals: Goal[];
+  currentBalance: number;
   
   // Computed values
   monthlyIncome: number;
@@ -99,6 +100,7 @@ interface DashboardState {
   setIncomeStreams: (streams: IncomeStream[]) => void;
   setExpenses: (expenses: Expense[]) => void;
   setGoals: (goals: Goal[]) => void;
+  setCurrentBalance: (balance: number) => void;
   addIncomeStream: (stream: IncomeStream) => void;
   updateIncomeStream: (id: string, updates: Partial<IncomeStream>) => void;
   removeIncomeStream: (id: string) => void;
@@ -125,6 +127,7 @@ export const useDashboardStore = create<DashboardState>()(
       incomeStreams: [],
       expenses: [],
       goals: [],
+      currentBalance: 0,
       monthlyIncome: 0,
       monthlyExpenses: 0,
       burnRate: 0,
@@ -164,7 +167,7 @@ export const useDashboardStore = create<DashboardState>()(
           
           // Calculate new lifestyle metrics
           const requiredIncome = calculateRequiredIncome(state.monthlyExpenses);
-          const emergencyRunwayMonths = calculateEmergencyRunway(monthlyIncome - state.monthlyExpenses, state.monthlyExpenses);
+          const emergencyRunwayMonths = calculateEmergencyRunway(state.currentBalance, state.monthlyExpenses);
           const debtToIncomeRatio = calculateDebtToIncomeRatio(0, monthlyIncome); // TODO: Add debt tracking
           const burnRateScenarios = calculateBurnRateScenarios(monthlyIncome, state.monthlyExpenses);
           
@@ -201,7 +204,7 @@ export const useDashboardStore = create<DashboardState>()(
           
           // Calculate new lifestyle metrics
           const requiredIncome = calculateRequiredIncome(monthlyExpenses);
-          const emergencyRunwayMonths = calculateEmergencyRunway(state.monthlyIncome - monthlyExpenses, monthlyExpenses);
+          const emergencyRunwayMonths = calculateEmergencyRunway(state.currentBalance, monthlyExpenses);
           const debtToIncomeRatio = calculateDebtToIncomeRatio(0, state.monthlyIncome); // TODO: Add debt tracking
           const burnRateScenarios = calculateBurnRateScenarios(state.monthlyIncome, monthlyExpenses);
           
@@ -231,6 +234,19 @@ export const useDashboardStore = create<DashboardState>()(
 
       setGoals: (goals) => {
         set({ goals });
+      },
+
+      setCurrentBalance: (balance) => {
+        set((state) => {
+          const emergencyRunwayMonths = calculateEmergencyRunway(balance, state.monthlyExpenses);
+          const financialRisk = assessFinancialRisk(state.burnRate, emergencyRunwayMonths, state.debtToIncomeRatio, state.incomeStreams.length);
+          
+          return {
+            currentBalance: balance,
+            emergencyRunwayMonths,
+            financialRisk,
+          };
+        });
       },
 
       addIncomeStream: (stream) => {
