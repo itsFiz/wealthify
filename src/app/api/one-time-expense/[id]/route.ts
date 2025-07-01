@@ -15,9 +15,10 @@ const updateOneTimeExpenseSchema = z.object({
 // GET /api/one-time-expense/[id] - Get specific one-time expense entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -34,7 +35,7 @@ export async function GET(
 
     const entry = await prisma.oneTimeExpense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -59,9 +60,10 @@ export async function GET(
 // PUT /api/one-time-expense/[id] - Update one-time expense entry
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -79,7 +81,7 @@ export async function PUT(
     // Check if entry exists and belongs to user
     const existingEntry = await prisma.oneTimeExpense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -92,7 +94,7 @@ export async function PUT(
     const validatedData = updateOneTimeExpenseSchema.parse(body);
 
     const updatedEntry = await prisma.oneTimeExpense.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
     });
 
@@ -116,9 +118,10 @@ export async function PUT(
 // DELETE /api/one-time-expense/[id] - Delete one-time expense entry
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -136,7 +139,7 @@ export async function DELETE(
     // Check if entry exists and belongs to user
     const existingEntry = await prisma.oneTimeExpense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -146,7 +149,7 @@ export async function DELETE(
     }
 
     await prisma.oneTimeExpense.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ message: 'Expense entry deleted successfully' });

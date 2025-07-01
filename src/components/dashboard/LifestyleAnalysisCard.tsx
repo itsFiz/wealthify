@@ -15,6 +15,7 @@ import {
   Zap,
   BarChart3
 } from 'lucide-react';
+import type { IncomeStream, Expense } from '@/types';
 
 interface LifestyleAnalysisData {
   requiredIncome: number;
@@ -36,8 +37,8 @@ interface LifestyleAnalysisData {
 interface LifestyleAnalysisCardProps {
   title: string;
   data: LifestyleAnalysisData;
-  incomeStreams?: any[];
-  expenses?: any[];
+  incomeStreams?: IncomeStream[];
+  expenses?: Expense[];
 }
 
 export function LifestyleAnalysisCard({ 

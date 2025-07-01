@@ -6,7 +6,7 @@ import { prisma } from '@/lib/db';
 // DELETE /api/goals/[id]/contributions/[contributionId] - Delete a specific contribution
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; contributionId: string } }
+  { params }: { params: Promise<{ id: string; contributionId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,11 +23,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Await the params to get the actual values
+    const { id, contributionId } = await params;
+
     // Verify the goal belongs to the user and get the contribution
     const contribution = await prisma.goalContribution.findFirst({
       where: {
-        id: params.contributionId,
-        goalId: params.id,
+        id: contributionId,
+        goalId: id,
         goal: {
           userId: user.id,
         },
@@ -48,12 +51,12 @@ export async function DELETE(
     const deletedContribution = await prisma.$transaction(async (tx) => {
       // Delete the contribution
       const deleted = await tx.goalContribution.delete({
-        where: { id: params.contributionId },
+        where: { id: contributionId },
       });
 
       // Update the goal's current amount by subtracting the deleted contribution
       const updatedGoal = await tx.goal.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           currentAmount: {
             decrement: contribution.amount,

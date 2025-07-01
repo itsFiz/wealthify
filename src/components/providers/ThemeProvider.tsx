@@ -61,7 +61,7 @@ export function ThemeProvider({
       if (stored) {
         setTheme(stored);
       }
-    } catch (error) {
+    } catch {
       // Fallback to default theme if localStorage fails
       setTheme(defaultTheme);
     }

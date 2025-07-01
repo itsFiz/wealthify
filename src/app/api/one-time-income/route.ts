@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 const createOneTimeIncomeSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -34,13 +35,13 @@ export async function GET(request: NextRequest) {
     const month = searchParams.get('month');
 
     // Build where clause based on filters
-    const whereClause: any = {
+    const whereClause: Prisma.OneTimeIncomeWhereInput = {
       userId: user.id,
     };
 
     // Only add date filters if they are provided
     if (year || month) {
-      const dateClause: any = {};
+      const dateClause: Prisma.DateTimeFilter = {};
       
       if (year && month) {
         // Specific year and month
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Convert Decimal fields to numbers for JSON serialization
-    const entriesWithNumbers = entries.map((entry: any) => ({
+    const entriesWithNumbers = entries.map((entry) => ({
       ...entry,
       amount: Number(entry.amount),
     }));

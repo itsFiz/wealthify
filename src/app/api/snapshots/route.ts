@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { calculateMonthlyIncome, calculateMonthlyExpenses, calculateBurnRate, calculateSavingsRate, calculateHealthScore, calculateMonthlyChange } from '@/lib/calculations/index';
+import type { IncomeStream, Expense } from '@/types';
 
 // GET /api/snapshots - Get user's monthly snapshots for trends
 export async function GET(request: NextRequest) {
@@ -83,8 +84,8 @@ export async function POST() {
     const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
     // Calculate current financial metrics
-    const totalIncome = calculateMonthlyIncome(user.incomeStreams);
-    const totalExpenses = calculateMonthlyExpenses(user.expenses);
+    const totalIncome = calculateMonthlyIncome(user.incomeStreams as unknown as IncomeStream[]);
+    const totalExpenses = calculateMonthlyExpenses(user.expenses as unknown as Expense[]);
     const totalSavings = totalIncome - totalExpenses;
     const burnRate = calculateBurnRate(totalExpenses, totalIncome);
     const savingsRate = calculateSavingsRate(totalIncome, totalExpenses);

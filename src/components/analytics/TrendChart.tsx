@@ -3,11 +3,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area
 } from 'recharts';
-import { formatCurrency } from '@/lib/calculations/index';
 
 interface TrendData {
   month: string;
-  [key: string]: any;
+  [key: string]: string | number;
 }
 
 interface TrendChartProps {
@@ -21,16 +20,16 @@ interface TrendChartProps {
     strokeDasharray?: string;
   }>;
   height?: number;
-  yAxisFormatter?: (value: any) => string;
-  tooltipFormatter?: (value: any, name: string) => [string, string];
+  yAxisFormatter?: (value: string | number) => string;
+  tooltipFormatter?: (value: string | number, name: string) => [string, string];
 }
 
 export function TrendChart({ 
   data, 
   lines, 
   height = 300, 
-  yAxisFormatter = (value) => value,
-  tooltipFormatter = (value, name) => [value, name]
+  yAxisFormatter = (value) => String(value),
+  tooltipFormatter = (value, name) => [String(value), name]
 }: TrendChartProps) {
   const hasAreaChart = lines.some(line => line.type === 'area');
   
@@ -43,7 +42,7 @@ export function TrendChart({
           <YAxis tickFormatter={yAxisFormatter} />
           <Tooltip formatter={tooltipFormatter} />
           <Legend />
-          {lines.map((line, index) => (
+          {lines.map((line) => (
             line.type === 'area' ? (
               <Area
                 key={line.dataKey}

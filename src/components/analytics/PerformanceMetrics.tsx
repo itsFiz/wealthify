@@ -9,8 +9,7 @@ import {
   Target, 
   AlertTriangle, 
   CheckCircle,
-  Clock,
-  DollarSign,
+  
   Activity
 } from 'lucide-react';
 

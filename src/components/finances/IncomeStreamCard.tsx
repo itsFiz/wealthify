@@ -10,9 +10,7 @@ import {
   Briefcase,
   Building,
   Users,
-  TrendingDown,
   Wallet,
-  MoreHorizontal
 } from 'lucide-react';
 
 interface IncomeStreamCardProps {

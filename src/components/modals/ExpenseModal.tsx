@@ -2,11 +2,22 @@ import React from 'react';
 import { ExpenseForm } from '@/components/forms/ExpenseForm';
 import type { Expense } from '@/types';
 
+// Define the form data type that matches ExpenseForm's expected input
+interface ExpenseFormData {
+  name: string;
+  category: import('@/types').ExpenseCategory;
+  type: import('@/types').ExpenseType;
+  amount: number;
+  frequency: import('@/types').Frequency;
+  isActive: boolean;
+  incurredDate: string;
+}
+
 interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   expense?: Expense;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: ExpenseFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
 

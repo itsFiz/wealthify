@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,6 @@ export function GoalContributionsList({
   onDeleteContribution,
   isDeleting 
 }: GoalContributionsListProps) {
-  const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
 
   const sortedContributions = [...contributions].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -41,7 +40,7 @@ export function GoalContributionsList({
           <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Contributions Yet</h3>
           <p className="text-muted-foreground">
-            Start building towards your "{goalName}" goal by making your first contribution.
+            Start building towards your &quot;{goalName}&quot; goal by making your first contribution.
           </p>
         </CardContent>
       </Card>
@@ -74,7 +73,7 @@ export function GoalContributionsList({
           </div>
           <p className="text-xs text-blue-700">
             Contributions move money from your available balance to goal progress. 
-            They're not expenses - your total balance stays the same, but money is now "committed" to this goal.
+            They&apos;re not expenses - your total balance stays the same, but money is now &quot;committed&quot; to this goal.
           </p>
         </div>
 

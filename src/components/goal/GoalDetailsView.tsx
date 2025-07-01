@@ -1,13 +1,12 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MilestoneProgress } from '@/components/ui/animated-progress';
-import { Progress } from '@/components/ui/progress';
 import { GoalContributionsList } from '@/components/goals/GoalContributionsList';
 import { cn } from '@/lib/utils';
 import { calculateGoalProgress, formatCurrency } from '@/lib/calculations/index';
-import type { Goal, GoalContribution } from '@/types';
+import type { Goal } from '@/types';
 import { GOAL_CATEGORY_CONFIGS } from '@/types';
 import { 
   Target, 
@@ -30,11 +29,6 @@ import {
   BarChart3,
   Clock,
   CheckCircle,
-  GraduationCap,
-  Baby,
-  Heart,
-  Gift,
-  Award
 } from 'lucide-react';
 
 interface GoalDetailsViewProps {
@@ -81,16 +75,9 @@ export function GoalDetailsView({
   
   // Calculate milestone levels (every 25%)
   const milestones = [25, 50, 75, 100];
-  const currentMilestone = milestones.find(m => progress < m) || 100;
   const completedMilestones = milestones.filter(m => progress >= m);
   
-  const getProgressColor = (progress: number) => {
-    if (progress >= 100) return 'from-green-500 to-emerald-500';
-    if (progress >= 75) return 'from-blue-500 to-purple-500';
-    if (progress >= 50) return 'from-yellow-500 to-orange-500';
-    if (progress >= 25) return 'from-orange-500 to-red-500';
-    return 'from-gray-400 to-gray-500';
-  };
+
 
   const getMilestoneIcon = (milestone: number) => {
     switch (milestone) {
@@ -215,7 +202,7 @@ export function GoalDetailsView({
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className={cn("text-2xl font-bold", progress >= 100 ? "text-green-600" : "text-blue-600")}>
                   {formatCurrency(goal.currentAmount)}
                 </div>
                 <div className="text-sm text-muted-foreground">Current Amount</div>
@@ -227,7 +214,7 @@ export function GoalDetailsView({
                 <div className="text-sm text-muted-foreground">Target Amount</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
+                <div className={cn("text-2xl font-bold", progress >= 75 ? "text-green-600" : progress >= 50 ? "text-yellow-600" : "text-orange-600")}>
                   {formatCurrency(remainingAmount)}
                 </div>
                 <div className="text-sm text-muted-foreground">Remaining</div>
@@ -255,7 +242,13 @@ export function GoalDetailsView({
                   <Badge
                     key={milestone}
                     variant="outline"
-                    className="bg-gradient-to-r from-yellow-100 to-yellow-200 border-yellow-400 text-yellow-800"
+                    className={cn(
+                      "bg-gradient-to-r border",
+                      milestone === 100 ? "from-green-100 to-green-200 border-green-400 text-green-800" :
+                      milestone === 75 ? "from-blue-100 to-blue-200 border-blue-400 text-blue-800" :
+                      milestone === 50 ? "from-yellow-100 to-yellow-200 border-yellow-400 text-yellow-800" :
+                      "from-orange-100 to-orange-200 border-orange-400 text-orange-800"
+                    )}
                   >
                     {getMilestoneIcon(milestone)}
                     <span className="ml-1">{milestone}% Club</span>
@@ -323,7 +316,9 @@ export function GoalDetailsView({
                 </div>
                 <div className="flex justify-between">
                   <span>Progress:</span>
-                  <span className="font-semibold">{progress.toFixed(1)}%</span>
+                  <span className={cn("font-semibold", progress >= 100 ? "text-green-600" : progress >= 75 ? "text-blue-600" : progress >= 50 ? "text-yellow-600" : "text-orange-600")}>
+                    {progress.toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </Card>

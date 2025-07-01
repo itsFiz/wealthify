@@ -127,7 +127,7 @@ export default function SignUpPage() {
           router.push('/dashboard');
         }, 1000);
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: 'An error occurred. Please try again.'

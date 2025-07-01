@@ -2,11 +2,21 @@ import React from 'react';
 import { IncomeStreamForm } from '@/components/forms/IncomeStreamForm';
 import type { IncomeStream } from '@/types';
 
+interface IncomeStreamFormData {
+  name: string;
+  type: import('@/types').IncomeType;
+  expectedMonthly: number;
+  actualMonthly?: number;
+  frequency: import('@/types').Frequency;
+  isActive: boolean;
+  earnedDate: string;
+}
+
 interface IncomeStreamModalProps {
   isOpen: boolean;
   onClose: () => void;
   incomeStream?: IncomeStream;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: IncomeStreamFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
 

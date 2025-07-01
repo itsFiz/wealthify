@@ -20,9 +20,40 @@ import {
   calculateBurnRateScenarios,
   calculateIncomeForEmergencyFund,
   analyzeLifestyleAffordability,
-  calculateEnhancedHealthScore,
   assessFinancialRisk
 } from '@/lib/calculations/index';
+
+// Define proper types for the analysis functions
+type LifestyleAnalysis = {
+  requiredIncome: number;
+  emergencyRunwayMonths: number;
+  debtToIncomeRatio: number;
+  lifestyleAffordability: {
+    currentAffordability: 'excellent' | 'good' | 'tight' | 'stressed';
+    monthlyGoalAllocation: number;
+    remainingAfterGoals: number;
+    recommendedIncomeIncrease: number;
+  };
+  incomeForEmergencyFund: number;
+};
+
+type BurnRateAnalysis = {
+  current: number;
+  scenarios: {
+    current: number;
+    incomeDown20: number;
+    incomeDown30: number;
+    expensesUp15: number;
+    expensesUp25: number;
+  };
+  recommendations: string[];
+};
+
+type FinancialRiskAssessment = {
+  riskLevel: 'low' | 'moderate' | 'high' | 'critical';
+  riskFactors: string[];
+  recommendations: string[];
+};
 
 interface DashboardState {
   // Data
@@ -82,9 +113,9 @@ interface DashboardState {
   refreshData: () => Promise<void>;
   getDashboardData: () => DashboardData;
   getGoalAnalysis: (goalId: string) => GoalCalculation | null;
-  getLifestyleAnalysis: () => any;
-  getBurnRateAnalysis: () => any;
-  getFinancialRiskAssessment: () => any;
+  getLifestyleAnalysis: () => LifestyleAnalysis;
+  getBurnRateAnalysis: () => BurnRateAnalysis;
+  getFinancialRiskAssessment: () => FinancialRiskAssessment;
 }
 
 export const useDashboardStore = create<DashboardState>()(

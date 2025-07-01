@@ -1,4 +1,4 @@
-import type { Goal, GoalForecast, ASSET_DEPRECIATION_RATES } from '@/types';
+import type { Goal, GoalForecast } from '@/types';
 
 /**
  * Local currency formatter to avoid circular imports

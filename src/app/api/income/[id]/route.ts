@@ -10,9 +10,10 @@ import { generateIncomeEntries } from '@/lib/utils/entryGeneration';
 // GET /api/income/[id] - Get specific income stream
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -29,7 +30,7 @@ export async function GET(
 
     const incomeStream = await prisma.incomeStream.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
       include: {
@@ -64,9 +65,10 @@ export async function GET(
 // PUT /api/income/[id] - Update income stream
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -84,7 +86,7 @@ export async function PUT(
     // Check if income stream exists and belongs to user
     const existingStream = await prisma.incomeStream.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -114,7 +116,7 @@ export async function PUT(
     console.log('🔄 Final update data:', updateData);
 
     const updatedStream = await prisma.incomeStream.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         entries: {
@@ -145,11 +147,11 @@ export async function PUT(
         console.log(`   - Amount changed: ${amountChanged} (RM${oldAmount} → RM${newAmount})`);
         
         // Delete existing entries and regenerate from the new date
-        const deleteResult = await deleteIncomeStreamEntries(params.id);
+        const deleteResult = await deleteIncomeStreamEntries(id);
         console.log(`🗑️ ${deleteResult.message}`);
         
         // Regenerate entries with new date/amount
-        const generateResult = await generateIncomeEntries(params.id);
+        const generateResult = await generateIncomeEntries(id);
         console.log(`✅ ${generateResult.message}`);
       } catch (entryError) {
         console.error('❌ Failed to regenerate income entries:', entryError);
@@ -188,9 +190,10 @@ export async function PUT(
 // DELETE /api/income/[id] - Delete income stream
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -208,7 +211,7 @@ export async function DELETE(
     // Check if income stream exists and belongs to user
     const existingStream = await prisma.incomeStream.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -219,7 +222,7 @@ export async function DELETE(
 
     // Delete associated entries first
     try {
-      const result = await deleteIncomeStreamEntries(params.id);
+      const result = await deleteIncomeStreamEntries(id);
       console.log(`🗑️ ${result.message}`);
     } catch (entryError) {
       console.error('❌ Failed to delete income entries:', entryError);
@@ -228,7 +231,7 @@ export async function DELETE(
 
     // Delete the income stream
     await prisma.incomeStream.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     console.log(`✅ Successfully deleted income stream: ${existingStream.name}`);

@@ -12,7 +12,6 @@ import {
   Heart,
   Briefcase,
   User,
-  MoreHorizontal,
   DollarSign
 } from 'lucide-react';
 

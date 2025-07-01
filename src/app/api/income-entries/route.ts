@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 const createIncomeEntrySchema = z.object({
   incomeStreamId: z.string(),
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const incomeStreamId = searchParams.get('incomeStreamId');
 
     // Build where clause based on filters
-    const whereClause: any = {
+    const whereClause: Prisma.IncomeEntryWhereInput = {
       incomeStream: {
         userId: user.id,
       },
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Only add date filters if they are provided
     if (year || month) {
-      const monthClause: any = {};
+      const monthClause: Prisma.DateTimeFilter = {};
       
       if (year && month) {
         // Specific year and month

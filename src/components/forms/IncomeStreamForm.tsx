@@ -13,7 +13,6 @@ import {
   Building,
   Users,
   Banknote,
-  Landmark,
   Wallet,
   Clock,
   Calendar,
@@ -123,7 +122,7 @@ export function IncomeStreamForm({ incomeStream, onSubmit, onCancel, isSubmittin
     }
   };
 
-  const updateFormData = (field: keyof IncomeStreamFormData, value: any) => {
+  const updateFormData = (field: keyof IncomeStreamFormData, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {

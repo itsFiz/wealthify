@@ -2,11 +2,21 @@ import React from 'react';
 import { GoalForm } from '@/components/forms/GoalForm';
 import type { Goal } from '@/types';
 
+export interface GoalFormData {
+  name: string;
+  description: string;
+  targetAmount: number;
+  targetDate: string;
+  priority: number;
+  category: string;
+  image?: File;
+}
+
 interface GoalModalProps {
   isOpen: boolean;
   onClose: () => void;
   goal?: Goal;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: GoalFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
 

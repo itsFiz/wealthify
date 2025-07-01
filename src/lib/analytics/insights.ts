@@ -10,11 +10,55 @@ interface Insight {
   timeline?: string;
 }
 
+// Define proper types for analytics data
+interface GoalPerformance {
+  id: string;
+  name: string;
+  progress: number;
+  isOnTrack: boolean;
+  requiredMonthly: number;
+  targetAmount: number;
+  currentAmount: number;
+}
+
+interface IncomeStreamPerformance {
+  id: string;
+  name: string;
+  expectedMonthly: number;
+  actualMonthly: number;
+  variance: number;
+}
+
+interface ExpenseBreakdown {
+  category: string;
+  amount: number;
+  percentage: number;
+}
+
+interface MonthlySnapshot {
+  id: string;
+  month: Date;
+  totalIncome: number;
+  totalExpenses: number;
+  totalSavings: number;
+  burnRate: number;
+  savingsRate: number;
+  healthScore: number;
+  startingBalance: number;
+  endingBalance: number;
+  balanceChange: number;
+  balanceChangePercent: number | null;
+  incomeChangePercent: number | null;
+  expenseChangePercent: number | null;
+  savingsChangePercent: number | null;
+  healthScoreChange: number | null;
+}
+
 interface AnalyticsData {
-  snapshots: any[];
-  goalPerformance: any[];
-  incomeStreamPerformance: any[];
-  expenseBreakdown: any[];
+  snapshots: MonthlySnapshot[];
+  goalPerformance: GoalPerformance[];
+  incomeStreamPerformance: IncomeStreamPerformance[];
+  expenseBreakdown: ExpenseBreakdown[];
   monthlyIncome: number;
   monthlyExpenses: number;
   currentBalance: number;
@@ -205,9 +249,6 @@ export function generateFinancialInsights(data: AnalyticsData): Insight[] {
   // Trend Analysis
   if (data.snapshots.length >= 3) {
     const recentSnapshots = data.snapshots.slice(0, 3);
-    const avgIncome = recentSnapshots.reduce((sum, s) => sum + s.totalIncome, 0) / 3;
-    const avgExpenses = recentSnapshots.reduce((sum, s) => sum + s.totalExpenses, 0) / 3;
-    
     const incomeGrowth = ((recentSnapshots[0].totalIncome - recentSnapshots[2].totalIncome) / recentSnapshots[2].totalIncome) * 100;
     
     if (incomeGrowth > 10) {
@@ -241,7 +282,7 @@ export function generateFinancialInsights(data: AnalyticsData): Insight[] {
   return insights;
 }
 
-export function generateComparisonData(snapshots: any[]) {
+export function generateComparisonData(snapshots: MonthlySnapshot[]) {
   if (snapshots.length < 2) return [];
   
   const current = snapshots[0];

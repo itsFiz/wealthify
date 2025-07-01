@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard,
-  TrendingUp,
-  TrendingDown,
+
   Target,
   Calculator,
   FileText,
@@ -18,15 +17,13 @@ import {
   LogOut,
   Wallet,
   PieChart,
-  BarChart3,
-  Zap,
   Award,
   User,
   HelpCircle,
-  Bell,
   Calendar,
   CreditCard
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface SidebarProps {
   className?: string;
@@ -183,7 +180,7 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="border-b border-white/10 p-4">
           <div className="flex items-center space-x-3">
             {session.user.image ? (
-              <img
+              <Image
                 src={session.user.image}
                 alt="Profile"
                 className="h-10 w-10 rounded-full ring-2 ring-primary/50"

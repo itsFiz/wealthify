@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,22 +16,17 @@ import { ConfirmDeleteModal } from '@/components/modals/ConfirmDeleteModal';
 import { BalanceUpdateForm } from '@/components/forms/BalanceUpdateForm';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
-import { formatCurrency, formatPercentage, getBurnRateColor, getHealthScoreColor, calculateAccumulatedBalance } from '@/lib/calculations/index';
+import { formatCurrency, formatPercentage, calculateAccumulatedBalance } from '@/lib/calculations/index';
 import toast from 'react-hot-toast';
 import { 
   Wallet, 
   TrendingDown, 
   TrendingUp, 
   Target,
-  Zap,
   Plus,
-  ArrowRight,
-  PieChart,
-  BarChart3,
   Trophy,
+  BarChart3,
   Activity,
-  Home,
-  Car,
   Shield,
   CreditCard,
   DollarSign,
@@ -42,10 +37,11 @@ import {
   Edit,
   Trash2,
   ChevronDown,
-  ArrowUpDown,
   Loader2
 } from 'lucide-react';
-import type { Goal, IncomeStream, Expense } from '@/types';
+import type { Goal, IncomeStream, Expense, IncomeType, ExpenseCategory, ExpenseType, GoalCategory } from '@/types';
+import type { GoalFormData } from '@/components/modals/GoalModal';
+import { Frequency } from '@/types';
 
 // Types for monthly snapshots
 interface MonthlySnapshot {
@@ -85,6 +81,79 @@ interface ActionConfirmation {
   itemName: string;
   currentStatus?: boolean;
   isProcessing: boolean;
+}
+
+// Add proper types for API responses
+interface IncomeStreamResponse {
+  id: string;
+  name: string;
+  type: string;
+  frequency: string;
+  expectedMonthly: string | number;
+  actualMonthly?: string | number;
+  isActive: boolean;
+  earnedDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ExpenseResponse {
+  id: string;
+  name: string;
+  category: string;
+  type: string;
+  amount: string | number;
+  isActive: boolean;
+  incurredDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface GoalResponse {
+  id: string;
+  name: string;
+  description: string;
+  targetAmount: string | number;
+  currentAmount: string | number;
+  targetDate: string;
+  priority: string | number;
+  category: string;
+  isCompleted: boolean;
+  initialAssetPrice?: string | number;
+  depreciationRate?: string | number;
+  downPaymentRatio?: string | number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BalanceResponse {
+  startingBalance: number;
+  notes?: string;
+}
+
+// Add this interface to match the modal's expected type
+interface IncomeStreamFormData {
+  name: string;
+  type: IncomeType;
+  expectedMonthly: number;
+  actualMonthly?: number;
+  frequency: Frequency;
+  isActive: boolean;
+  earnedDate: string;
+}
+
+// Add this interface to match the expense modal's expected type
+interface ExpenseFormData {
+  name: string;
+  category: ExpenseCategory;
+  type: ExpenseType;
+  amount: number;
+  frequency: Frequency;
+  isActive: boolean;
+  incurredDate: string;
 }
 
 // Enhanced Skeleton loader components with better animations
@@ -215,17 +284,6 @@ const LoadingOverlay = ({ children, isLoading, className = "" }: {
 const InlineLoader = ({ className = "" }: { className?: string }) => (
   <div className={`flex items-center justify-center ${className}`}>
     <Loader2 className="h-5 w-5 animate-spin text-primary" />
-  </div>
-);
-
-// Section Loading Component
-const SectionSkeleton = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="space-y-4">
-    <div className="flex items-center space-x-2">
-      <div className="h-6 w-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded animate-pulse"></div>
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-    </div>
-    {children}
   </div>
 );
 
@@ -387,7 +445,7 @@ export default function Dashboard() {
   const [isDeletingContribution, setIsDeletingContribution] = useState<string>('');
 
   // Enhanced fetch function with individual loading states
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!user?.id) return;
 
     setIsRefreshingData(true);
@@ -398,7 +456,7 @@ export default function Dashboard() {
       const balanceResponse = await fetch('/api/balance');
       let fetchedStartingBalance = 0;
       if (balanceResponse.ok) {
-        const balanceData = await balanceResponse.json();
+        const balanceData: BalanceResponse = await balanceResponse.json();
         fetchedStartingBalance = balanceData.startingBalance || 0;
         setStartingBalance(fetchedStartingBalance);
         console.log('💰 Starting balance fetched:', fetchedStartingBalance);
@@ -411,13 +469,19 @@ export default function Dashboard() {
       // Fetch income streams
       setLoadingStates(prev => ({ ...prev, income: true }));
       const incomeResponse = await fetch('/api/income');
-      let processedIncome: any[] = [];
+      let processedIncome: IncomeStream[] = [];
       if (incomeResponse.ok) {
-        const incomeData = await incomeResponse.json();
-        processedIncome = incomeData.map((stream: any) => ({
+        const incomeData: IncomeStreamResponse[] = await incomeResponse.json();
+        processedIncome = incomeData.map((stream: IncomeStreamResponse) => ({
           ...stream,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           expectedMonthly: Number(stream.expectedMonthly),
           actualMonthly: Number(stream.actualMonthly || stream.expectedMonthly),
+          type: stream.type as IncomeType, // Convert string to enum
+          frequency: stream.frequency as Frequency, // Convert string to enum
+          earnedDate: stream.earnedDate ? new Date(stream.earnedDate) : undefined,
+          createdAt: new Date(stream.createdAt),
+          updatedAt: new Date(stream.updatedAt),
         }));
         setIncomeStreams(processedIncome);
       }
@@ -426,12 +490,19 @@ export default function Dashboard() {
       // Fetch expenses
       setLoadingStates(prev => ({ ...prev, expenses: true }));
       const expenseResponse = await fetch('/api/expenses');
-      let processedExpenses: any[] = [];
+      let processedExpenses: Expense[] = [];
       if (expenseResponse.ok) {
-        const expenseData = await expenseResponse.json();
-        processedExpenses = expenseData.map((expense: any) => ({
+        const expenseData: ExpenseResponse[] = await expenseResponse.json();
+        processedExpenses = expenseData.map((expense: ExpenseResponse) => ({
           ...expense,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           amount: Number(expense.amount),
+          category: expense.category as ExpenseCategory, // Convert string to enum
+          type: expense.type as ExpenseType, // Convert string to enum
+          frequency: Frequency.MONTHLY, // Default to monthly for existing expenses
+          incurredDate: expense.incurredDate ? new Date(expense.incurredDate) : undefined,
+          createdAt: new Date(expense.createdAt),
+          updatedAt: new Date(expense.updatedAt),
         }));
         setExpenses(processedExpenses);
       }
@@ -441,14 +512,17 @@ export default function Dashboard() {
       setLoadingStates(prev => ({ ...prev, goals: true }));
       const goalsResponse = await fetch('/api/goals');
       if (goalsResponse.ok) {
-        const goalsData = await goalsResponse.json();
-        const processedGoals = goalsData.map((goal: any) => ({
+        const goalsData: GoalResponse[] = await goalsResponse.json();
+        const processedGoals = goalsData.map((goal: GoalResponse) => ({
           ...goal,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           targetDate: new Date(goal.targetDate),
           createdAt: new Date(goal.createdAt),
           updatedAt: new Date(goal.updatedAt),
           targetAmount: Number(goal.targetAmount),
           currentAmount: Number(goal.currentAmount),
+          priority: Number(goal.priority), // Convert string to number
+          category: goal.category as GoalCategory, // Convert string to enum
           initialAssetPrice: goal.initialAssetPrice ? Number(goal.initialAssetPrice) : undefined,
           depreciationRate: goal.depreciationRate ? Number(goal.depreciationRate) : undefined,
           downPaymentRatio: goal.downPaymentRatio ? Number(goal.downPaymentRatio) : undefined,
@@ -485,7 +559,7 @@ export default function Dashboard() {
         snapshots: false,
       });
     }
-  };
+  }, [user?.id, setIncomeStreams, setExpenses, setGoals, setStartingBalance, setCurrentBalance]);
 
   // Fetch current month snapshot for trend data
   const fetchCurrentSnapshot = async () => {
@@ -528,7 +602,7 @@ export default function Dashboard() {
     if (user?.id && !authLoading) {
       fetchUserData();
     }
-  }, [user?.id, authLoading]);
+  }, [user?.id, authLoading, fetchUserData]);
 
   // Safe calculations with fallbacks to prevent NaN
   const safeMonthlyIncome = isNaN(monthlyIncome) ? 0 : monthlyIncome;
@@ -551,7 +625,7 @@ export default function Dashboard() {
   };
 
   // Goal CRUD operations
-  const handleCreateGoal = async (formData: any) => {
+  const handleCreateGoal = async (formData: GoalFormData) => {
     setGoalModal(prev => ({ ...prev, isSubmitting: true }));
     
     try {
@@ -607,15 +681,18 @@ export default function Dashboard() {
       console.log('📡 API response status:', response.status);
 
       if (response.ok) {
-        const newGoal = await response.json();
+        const newGoal: GoalResponse = await response.json();
         // Ensure dates are properly converted
-        const processedGoal = {
+        const processedGoal: Goal = {
           ...newGoal,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           targetDate: new Date(newGoal.targetDate),
           createdAt: new Date(newGoal.createdAt),
           updatedAt: new Date(newGoal.updatedAt),
           targetAmount: Number(newGoal.targetAmount),
           currentAmount: Number(newGoal.currentAmount),
+          priority: Number(newGoal.priority), // Convert string to number
+          category: newGoal.category as GoalCategory, // Convert string to enum
           initialAssetPrice: newGoal.initialAssetPrice ? Number(newGoal.initialAssetPrice) : undefined,
           depreciationRate: newGoal.depreciationRate ? Number(newGoal.depreciationRate) : undefined,
           downPaymentRatio: newGoal.downPaymentRatio ? Number(newGoal.downPaymentRatio) : undefined,
@@ -654,7 +731,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleUpdateGoal = async (formData: any) => {
+  const handleUpdateGoal = async (formData: GoalFormData) => {
     if (!goalModal.goal) return;
     
     setGoalModal(prev => ({ ...prev, isSubmitting: true }));
@@ -700,24 +777,26 @@ export default function Dashboard() {
         const responseText = await response.text();
         console.log('📡 Raw response text:', responseText);
         
-        let updatedGoal;
+        let updatedGoal: GoalResponse;
         try {
           updatedGoal = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('❌ JSON parse error:', parseError);
-          console.error('❌ Response text that failed to parse:', responseText);
+        } catch {
+          console.error('❌ JSON parse error for response text:', responseText);
           toast.error('Server returned invalid response. Please check the console for details.');
           throw new Error('Invalid JSON response from server');
         }
         
         // Ensure dates are properly converted
-        const processedGoal = {
+        const processedGoal: Goal = {
           ...updatedGoal,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           targetDate: new Date(updatedGoal.targetDate),
           createdAt: new Date(updatedGoal.createdAt),
           updatedAt: new Date(updatedGoal.updatedAt),
           targetAmount: Number(updatedGoal.targetAmount),
           currentAmount: Number(updatedGoal.currentAmount),
+          priority: Number(updatedGoal.priority), // Convert string to number
+          category: updatedGoal.category as GoalCategory, // Convert string to enum
           initialAssetPrice: updatedGoal.initialAssetPrice ? Number(updatedGoal.initialAssetPrice) : undefined,
           depreciationRate: updatedGoal.depreciationRate ? Number(updatedGoal.depreciationRate) : undefined,
           downPaymentRatio: updatedGoal.downPaymentRatio ? Number(updatedGoal.downPaymentRatio) : undefined,
@@ -744,7 +823,7 @@ export default function Dashboard() {
         let errorData;
         try {
           errorData = JSON.parse(responseText);
-        } catch (parseError) {
+        } catch {
           console.error('❌ Error response is not JSON:', responseText);
           toast.error(`Server error (${response.status}): ${responseText}`);
           throw new Error(`Server returned ${response.status}: ${responseText}`);
@@ -785,7 +864,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleGoalSubmit = async (formData: any) => {
+  const handleGoalSubmit = async (formData: GoalFormData) => {
     if (goalModal.goal) {
       await handleUpdateGoal(formData);
     } else {
@@ -794,19 +873,36 @@ export default function Dashboard() {
   };
 
   // Income Stream CRUD operations
-  const handleCreateIncomeStream = async (formData: any) => {
+  const handleCreateIncomeStream = async (formData: IncomeStreamFormData) => {
     setIncomeStreamModal(prev => ({ ...prev, isSubmitting: true }));
     
     try {
+      // Convert string date to Date object for API
+      const apiData = {
+        ...formData,
+        earnedDate: formData.earnedDate ? new Date(formData.earnedDate) : undefined,
+      };
+
       const response = await fetch('/api/income', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
 
       if (response.ok) {
-        const newIncomeStream = await response.json();
-        addIncomeStream(newIncomeStream);
+        const newIncomeStream: IncomeStreamResponse = await response.json();
+        const processedIncomeStream: IncomeStream = {
+          ...newIncomeStream,
+          userId: user!.id,
+          type: newIncomeStream.type as IncomeType,
+          frequency: newIncomeStream.frequency as Frequency,
+          expectedMonthly: Number(newIncomeStream.expectedMonthly),
+          actualMonthly: Number(newIncomeStream.actualMonthly || newIncomeStream.expectedMonthly),
+          earnedDate: newIncomeStream.earnedDate ? new Date(newIncomeStream.earnedDate) : undefined,
+          createdAt: new Date(newIncomeStream.createdAt),
+          updatedAt: new Date(newIncomeStream.updatedAt),
+        };
+        addIncomeStream(processedIncomeStream);
         toast.success(`💰 Income stream "${formData.name}" added successfully!`);
         setIncomeStreamModal({ isOpen: false, incomeStream: undefined, isSubmitting: false });
       } else {
@@ -821,21 +917,38 @@ export default function Dashboard() {
     }
   };
 
-  const handleUpdateIncomeStream = async (formData: any) => {
+  const handleUpdateIncomeStream = async (formData: IncomeStreamFormData) => {
     if (!incomeStreamModal.incomeStream) return;
     
     setIncomeStreamModal(prev => ({ ...prev, isSubmitting: true }));
     
     try {
+      // Convert string date to Date object for API
+      const apiData = {
+        ...formData,
+        earnedDate: formData.earnedDate ? new Date(formData.earnedDate) : undefined,
+      };
+
       const response = await fetch(`/api/income/${incomeStreamModal.incomeStream.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
 
       if (response.ok) {
-        const updatedIncomeStream = await response.json();
-        updateIncomeStream(incomeStreamModal.incomeStream.id, updatedIncomeStream);
+        const updatedIncomeStream: IncomeStreamResponse = await response.json();
+        const processedIncomeStream: IncomeStream = {
+          ...updatedIncomeStream,
+          userId: user!.id,
+          type: updatedIncomeStream.type as IncomeType,
+          frequency: updatedIncomeStream.frequency as Frequency,
+          expectedMonthly: Number(updatedIncomeStream.expectedMonthly),
+          actualMonthly: Number(updatedIncomeStream.actualMonthly || updatedIncomeStream.expectedMonthly),
+          earnedDate: updatedIncomeStream.earnedDate ? new Date(updatedIncomeStream.earnedDate) : undefined,
+          createdAt: new Date(updatedIncomeStream.createdAt),
+          updatedAt: new Date(updatedIncomeStream.updatedAt),
+        };
+        updateIncomeStream(incomeStreamModal.incomeStream.id, processedIncomeStream);
         toast.success(`✅ Income stream "${formData.name}" updated successfully!`);
         setIncomeStreamModal({ isOpen: false, incomeStream: undefined, isSubmitting: false });
       } else {
@@ -871,7 +984,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleIncomeStreamSubmit = async (formData: any) => {
+  const handleIncomeStreamSubmit = async (formData: IncomeStreamFormData) => {
     if (incomeStreamModal.incomeStream) {
       await handleUpdateIncomeStream(formData);
     } else {
@@ -934,19 +1047,36 @@ export default function Dashboard() {
   };
 
   // Expense CRUD operations
-  const handleCreateExpense = async (formData: any) => {
+  const handleCreateExpense = async (formData: ExpenseFormData) => {
     setExpenseModal(prev => ({ ...prev, isSubmitting: true }));
     
     try {
+      // Convert string date to Date object for API
+      const apiData = {
+        ...formData,
+        incurredDate: formData.incurredDate ? new Date(formData.incurredDate) : undefined,
+      };
+
       const response = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
 
       if (response.ok) {
-        const newExpense = await response.json();
-        addExpense(newExpense);
+        const newExpense: ExpenseResponse = await response.json();
+        const processedExpense: Expense = {
+          ...newExpense,
+          userId: user!.id,
+          amount: Number(newExpense.amount),
+          category: newExpense.category as ExpenseCategory,
+          type: newExpense.type as ExpenseType,
+          frequency: Frequency.MONTHLY, // Default to monthly
+          incurredDate: newExpense.incurredDate ? new Date(newExpense.incurredDate) : undefined,
+          createdAt: new Date(newExpense.createdAt),
+          updatedAt: new Date(newExpense.updatedAt),
+        };
+        addExpense(processedExpense);
         toast.success(`💸 Expense "${formData.name}" added successfully!`);
         setExpenseModal({ isOpen: false, expense: undefined, isSubmitting: false });
       } else {
@@ -961,21 +1091,38 @@ export default function Dashboard() {
     }
   };
 
-  const handleUpdateExpense = async (formData: any) => {
+  const handleUpdateExpense = async (formData: ExpenseFormData) => {
     if (!expenseModal.expense) return;
     
     setExpenseModal(prev => ({ ...prev, isSubmitting: true }));
     
     try {
+      // Convert string date to Date object for API
+      const apiData = {
+        ...formData,
+        incurredDate: formData.incurredDate ? new Date(formData.incurredDate) : undefined,
+      };
+
       const response = await fetch(`/api/expenses/${expenseModal.expense.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
 
       if (response.ok) {
-        const updatedExpense = await response.json();
-        updateExpense(expenseModal.expense.id, updatedExpense);
+        const updatedExpense: ExpenseResponse = await response.json();
+        const processedExpense: Expense = {
+          ...updatedExpense,
+          userId: user!.id,
+          amount: Number(updatedExpense.amount),
+          category: updatedExpense.category as ExpenseCategory,
+          type: updatedExpense.type as ExpenseType,
+          frequency: Frequency.MONTHLY, // Default to monthly
+          incurredDate: updatedExpense.incurredDate ? new Date(updatedExpense.incurredDate) : undefined,
+          createdAt: new Date(updatedExpense.createdAt),
+          updatedAt: new Date(updatedExpense.updatedAt),
+        };
+        updateExpense(expenseModal.expense.id, processedExpense);
         toast.success(`✅ Expense "${formData.name}" updated successfully!`);
         setExpenseModal({ isOpen: false, expense: undefined, isSubmitting: false });
       } else {
@@ -1065,7 +1212,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleExpenseSubmit = async (formData: any) => {
+  const handleExpenseSubmit = async (formData: ExpenseFormData) => {
     if (expenseModal.expense) {
       await handleUpdateExpense(formData);
     } else {
@@ -1074,7 +1221,7 @@ export default function Dashboard() {
   };
 
   // Contribution CRUD operations
-  const handleCreateContribution = async (formData: any) => {
+  const handleCreateContribution = async (formData: { amount: number; date?: string; notes?: string }) => {
     if (!contributionModal.goal) return;
     
     setContributionModal(prev => ({ ...prev, isSubmitting: true }));
@@ -1136,13 +1283,16 @@ export default function Dashboard() {
         });
         
         // Update the goal in the store with the updated data
-        const processedGoal = {
+        const processedGoal: Goal = {
           ...updatedGoal,
+          userId: user!.id, // Add missing userId (user is guaranteed to exist here)
           targetDate: new Date(updatedGoal.targetDate),
           createdAt: new Date(updatedGoal.createdAt),
           updatedAt: new Date(updatedGoal.updatedAt),
           targetAmount: Number(updatedGoal.targetAmount),
           currentAmount: Number(updatedGoal.currentAmount),
+          priority: Number(updatedGoal.priority), // Convert string to number
+          category: updatedGoal.category as GoalCategory, // Convert string to enum
           initialAssetPrice: updatedGoal.initialAssetPrice ? Number(updatedGoal.initialAssetPrice) : undefined,
           depreciationRate: updatedGoal.depreciationRate ? Number(updatedGoal.depreciationRate) : undefined,
           downPaymentRatio: updatedGoal.downPaymentRatio ? Number(updatedGoal.downPaymentRatio) : undefined,
@@ -1246,7 +1396,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const result: BalanceResponse = await response.json();
         setStartingBalance(result.startingBalance);
         // Recalculate current balance with new starting balance
         await fetchUserData();
@@ -1300,7 +1450,7 @@ export default function Dashboard() {
         await handleDeleteExpense(deleteConfirmation.itemId);
       }
       closeDeleteConfirmation();
-    } catch (error) {
+    } catch {
       setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
     }
   };
@@ -1363,7 +1513,7 @@ export default function Dashboard() {
         }
       }
       closeActionConfirmation();
-    } catch (error) {
+    } catch {
       setActionConfirmation(prev => ({ ...prev, isProcessing: false }));
     }
   };
@@ -1720,6 +1870,55 @@ export default function Dashboard() {
             )}
           </div>
         </LoadingOverlay>
+
+        {/* Completed Goals Section */}
+        {completedGoals.length > 0 && (
+          <LoadingOverlay isLoading={loadingStates.goals}>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Trophy className="h-6 w-6 text-green-500" />
+                  <h2 className="text-2xl font-bold text-foreground">Completed Goals</h2>
+                </div>
+                <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
+                  {completedGoals.length} Goals Completed
+                </Badge>
+              </div>
+              
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+                {completedGoals.map((goal) => (
+                  <div key={goal.id} className="relative group">
+                    <GoalProgressCard
+                      goal={goal}
+                      onAddContribution={() => openContributionModal(goal)}
+                      onViewDetails={() => openGoalDetailsModal(goal)}
+                    />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEditGoalModal(goal)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openDeleteConfirmation('goal', goal.id, goal.name)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </LoadingOverlay>
+        )}
 
         {/* Active Recurring Finance with enhanced loading */}
         <div className="space-y-6">

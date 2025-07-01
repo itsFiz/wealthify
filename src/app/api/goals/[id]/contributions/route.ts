@@ -8,9 +8,10 @@ import { z } from 'zod';
 // GET /api/goals/[id]/contributions - Get contributions for a specific goal
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -28,7 +29,7 @@ export async function GET(
     // Verify goal ownership
     const goal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -38,7 +39,7 @@ export async function GET(
     }
 
     const contributions = await prisma.goalContribution.findMany({
-      where: { goalId: params.id },
+      where: { goalId: id },
       orderBy: { month: 'desc' },
     });
 
@@ -58,9 +59,10 @@ export async function GET(
 // POST /api/goals/[id]/contributions - Add new contribution to goal
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -78,7 +80,7 @@ export async function POST(
     // Verify goal ownership
     const goal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -92,7 +94,7 @@ export async function POST(
     // Convert date string to Date object for validation
     const processedBody = {
       ...body,
-      goalId: params.id,
+      goalId: id,
       month: new Date(body.month),
     };
 
@@ -101,7 +103,7 @@ export async function POST(
     // Create the contribution
     const contribution = await prisma.goalContribution.create({
       data: {
-        goalId: params.id,
+        goalId: id,
         amount: validatedData.amount,
         month: validatedData.month,
         notes: validatedData.notes,
@@ -110,7 +112,7 @@ export async function POST(
 
     // Update goal's current amount
     const updatedGoal = await prisma.goal.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         currentAmount: {
           increment: validatedData.amount,

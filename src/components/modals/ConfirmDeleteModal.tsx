@@ -85,7 +85,7 @@ export function ConfirmDeleteModal({
                 <div className="flex items-center space-x-2 mt-1">
                   <span className="text-lg">{config.icon}</span>
                   <span className="text-sm font-medium text-muted-foreground">
-                    "{itemName}"
+                    &quot;{itemName}&quot;
                   </span>
                 </div>
               )}

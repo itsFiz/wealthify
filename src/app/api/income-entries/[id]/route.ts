@@ -6,9 +6,10 @@ import { prisma } from '@/lib/db';
 // GET /api/income-entries/[id] - Get specific income entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -25,7 +26,7 @@ export async function GET(
 
     const entry = await prisma.incomeEntry.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         incomeStream: {
           userId: user.id,
         },
@@ -61,9 +62,10 @@ export async function GET(
 // DELETE /api/income-entries/[id] - Delete specific income entry
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -81,7 +83,7 @@ export async function DELETE(
     // Check if entry exists and belongs to user
     const existingEntry = await prisma.incomeEntry.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         incomeStream: {
           userId: user.id,
         },
@@ -102,7 +104,7 @@ export async function DELETE(
     }
 
     await prisma.incomeEntry.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     console.log(`✅ Successfully deleted income entry: ${existingEntry.incomeStream.name} for ${existingEntry.month.toLocaleDateString()}`);

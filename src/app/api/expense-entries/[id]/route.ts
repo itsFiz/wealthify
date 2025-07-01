@@ -6,9 +6,10 @@ import { prisma } from '@/lib/db';
 // GET /api/expense-entries/[id] - Get specific expense entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -25,7 +26,7 @@ export async function GET(
 
     const entry = await prisma.expenseEntry.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         expense: {
           userId: user.id,
         },
@@ -62,9 +63,10 @@ export async function GET(
 // DELETE /api/expense-entries/[id] - Delete specific expense entry
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -82,7 +84,7 @@ export async function DELETE(
     // Check if entry exists and belongs to user
     const existingEntry = await prisma.expenseEntry.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         expense: {
           userId: user.id,
         },
@@ -104,7 +106,7 @@ export async function DELETE(
     }
 
     await prisma.expenseEntry.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     console.log(`✅ Successfully deleted expense entry: ${existingEntry.expense.name} for ${existingEntry.month.toLocaleDateString()}`);

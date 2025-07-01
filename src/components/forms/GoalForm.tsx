@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/calculations/index';
 import type { Goal, GoalCategory } from '@/types';
@@ -26,6 +25,7 @@ import {
   Briefcase,
   Archive
 } from 'lucide-react';
+import Image from 'next/image';
 
 // Icon mapping for dynamic icon rendering
 const iconMap = {
@@ -132,7 +132,7 @@ export function GoalForm({ goal, onSubmit, onCancel, isSubmitting = false }: Goa
     }
   };
 
-  const updateFormData = (field: keyof GoalFormData, value: any) => {
+  const updateFormData = (field: keyof GoalFormData, value: string | number | File) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -403,7 +403,7 @@ export function GoalForm({ goal, onSubmit, onCancel, isSubmitting = false }: Goa
             
             {imagePreview ? (
               <div className="relative">
-                <img 
+                <Image 
                   src={imagePreview} 
                   alt="Goal preview" 
                   className="w-full h-48 object-cover rounded-lg border border-gray-200"

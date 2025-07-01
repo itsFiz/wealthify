@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,16 +18,9 @@ import {
   Tooltip, 
   ResponsiveContainer,
   BarChart,
-  Bar,
-  LineChart,
-  Line,
-  Legend
+  Bar
 } from 'recharts';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Calendar, 
   Target,
   ArrowUpRight,
   ArrowDownRight,
@@ -65,6 +56,52 @@ interface AnalyticsData {
   };
 }
 
+interface RawData {
+  incomeStreams: Array<{
+    name: string;
+    actualMonthly?: number;
+    expectedMonthly?: number;
+    type: string;
+  }>;
+  expenses: Array<{
+    name: string;
+    amount: number;
+    category: string;
+  }>;
+  incomeEntries: Array<{
+    amount: number;
+    month: string;
+    category?: string;
+    incomeStream?: { type: string };
+  }>;
+  expenseEntries: Array<{
+    amount: number;
+    month: string;
+    category?: string;
+    expense?: { category: string };
+  }>;
+  oneTimeIncome: Array<{
+    amount: number;
+    date: string;
+    category?: string;
+  }>;
+  oneTimeExpense: Array<{
+    amount: number;
+    date: string;
+    category?: string;
+  }>;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  label?: string;
+}
+
 const INCOME_COLORS = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5'];
 const EXPENSE_COLORS = ['#EF4444', '#F87171', '#FCA5A5', '#FECACA', '#FEE2E2'];
 
@@ -74,10 +111,196 @@ export default function AnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTimeRange, setSelectedTimeRange] = useState('6months');
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  // Format category names
+  const formatCategoryName = useCallback((category: string) => {
+    const categoryMap: { [key: string]: string } = {
+      'FREELANCE': 'Freelance',
+      'AFFILIATE': 'Affiliate',
+      'ADSENSE': 'AdSense',
+      'GIGS': 'Gigs',
+      'BONUS': 'Bonus',
+      'GIFT': 'Gift',
+      'FOOD': 'Food & Dining',
+      'TRANSPORTATION': 'Transportation',
+      'HOUSING': 'Housing',
+      'UTILITIES': 'Utilities',
+      'SHOPPING': 'Shopping',
+      'HEALTHCARE': 'Healthcare',
+      'ENTERTAINMENT': 'Entertainment',
+      'BUSINESS': 'Business',
+      'OTHER': 'Other'
+    };
+    return categoryMap[category] || category;
+  }, []);
+
+  // Process income by category
+  const processIncomeByCategory = useCallback((allIncomeEntries: Array<{ category?: string; incomeStream?: { type: string }; amount: number }>) => {
+    const categoryTotals: { [key: string]: number } = {};
+    
+    allIncomeEntries.forEach(entry => {
+      const category = entry.category || (entry.incomeStream?.type) || 'OTHER';
+      categoryTotals[category] = (categoryTotals[category] || 0) + entry.amount;
+    });
+
+    return Object.entries(categoryTotals)
+      .map(([name, value], index) => ({
+        name: formatCategoryName(name),
+        value,
+        color: INCOME_COLORS[index % INCOME_COLORS.length]
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [formatCategoryName]);
+
+  // Process expenses by category  
+  const processExpensesByCategory = useCallback((allExpenseEntries: Array<{ category?: string; expense?: { category: string }; amount: number }>) => {
+    const categoryTotals: { [key: string]: number } = {};
+    
+    allExpenseEntries.forEach(entry => {
+      const category = entry.category || (entry.expense?.category) || 'OTHER';
+      categoryTotals[category] = (categoryTotals[category] || 0) + entry.amount;
+    });
+
+    return Object.entries(categoryTotals)
+      .map(([name, value], index) => ({
+        name: formatCategoryName(name),
+        value,
+        color: EXPENSE_COLORS[index % EXPENSE_COLORS.length]
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [formatCategoryName]);
+
+  // Process monthly trends
+  const processMonthlyTrends = useCallback((
+    incomeEntries: Array<{ month: string; amount: number }>,
+    expenseEntries: Array<{ month: string; amount: number }>,
+    oneTimeIncome: Array<{ date: string; amount: number }>,
+    oneTimeExpense: Array<{ date: string; amount: number }>
+  ) => {
+    const monthlyData: { [key: string]: { income: number; expenses: number } } = {};
+    
+    // Process regular income entries
+    incomeEntries.forEach(entry => {
+      const month = entry.month;
+      if (!monthlyData[month]) {
+        monthlyData[month] = { income: 0, expenses: 0 };
+      }
+      monthlyData[month].income += entry.amount;
+    });
+    
+    // Process regular expense entries
+    expenseEntries.forEach(entry => {
+      const month = entry.month;
+      if (!monthlyData[month]) {
+        monthlyData[month] = { income: 0, expenses: 0 };
+      }
+      monthlyData[month].expenses += entry.amount;
+    });
+    
+    // Process one-time income
+    oneTimeIncome.forEach(entry => {
+      const month = entry.date.slice(0, 7); // Extract YYYY-MM
+      if (!monthlyData[month]) {
+        monthlyData[month] = { income: 0, expenses: 0 };
+      }
+      monthlyData[month].income += entry.amount;
+    });
+    
+    // Process one-time expenses
+    oneTimeExpense.forEach(entry => {
+      const month = entry.date.slice(0, 7); // Extract YYYY-MM
+      if (!monthlyData[month]) {
+        monthlyData[month] = { income: 0, expenses: 0 };
+      }
+      monthlyData[month].expenses += entry.amount;
+    });
+    
+    // Convert to array and sort by month
+    return Object.entries(monthlyData)
+      .map(([month, data]) => ({
+        month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        income: data.income,
+        expenses: data.expenses,
+        net: data.income - data.expenses,
+        date: month
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, []);
+
+  // Process raw data into analytics format
+  const processAnalyticsData = useCallback((data: RawData): AnalyticsData => {
+    const { incomeStreams, expenses, incomeEntries, expenseEntries, oneTimeIncome, oneTimeExpense } = data;
+
+    // Calculate totals
+    const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0) +
+                       oneTimeIncome.reduce((sum, entry) => sum + entry.amount, 0);
+    
+    const totalExpenses = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0) +
+                         oneTimeExpense.reduce((sum, entry) => sum + entry.amount, 0);
+    
+    const netFlow = totalIncome - totalExpenses;
+
+    // Income by category
+    console.log('=== PROCESSING INCOME BY CATEGORY ===');
+    const incomeByCategory = processIncomeByCategory([...(incomeEntries || []), ...(oneTimeIncome || [])]);
+    console.log('Income by category result:', incomeByCategory);
+    
+    // Expenses by category
+    console.log('=== PROCESSING EXPENSES BY CATEGORY ===');
+    const expensesByCategory = processExpensesByCategory([...(expenseEntries || []), ...(oneTimeExpense || [])]);
+    console.log('Expenses by category result:', expensesByCategory);
+
+    // Monthly trends
+    const monthlyTrends = processMonthlyTrends(incomeEntries, expenseEntries, oneTimeIncome, oneTimeExpense);
+
+    // Top income streams
+    const topIncomeStreams = incomeStreams
+      .map(stream => ({
+        name: stream.name,
+        amount: stream.actualMonthly || stream.expectedMonthly || 0,
+        type: stream.type
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+
+    // Top expenses
+    const topExpenses = expenses
+      .map(expense => ({
+        name: expense.name,
+        amount: expense.amount,
+        category: expense.category
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+
+    // Financial health metrics
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+    const expenseRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
+    
+    // Calculate growth rates (simplified - you might want to enhance this)
+    const incomeGrowth = 5.2; // Placeholder - calculate from trends
+    const expenseGrowth = 2.1; // Placeholder - calculate from trends
+
+    return {
+      totalIncome,
+      totalExpenses,
+      netFlow,
+      incomeByCategory,
+      expensesByCategory,
+      monthlyTrends,
+      topIncomeStreams,
+      topExpenses,
+      financialHealth: {
+        savingsRate,
+        expenseRatio,
+        incomeGrowth,
+        expenseGrowth
+      }
+    };
+  }, [processIncomeByCategory, processExpensesByCategory, processMonthlyTrends]);
 
   // Fetch analytics data
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     if (!user?.id) return;
     
     setIsLoading(true);
@@ -159,332 +382,21 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Process raw data into analytics format
-  const processAnalyticsData = (data: any): AnalyticsData => {
-    const { incomeStreams, expenses, incomeEntries, expenseEntries, oneTimeIncome, oneTimeExpense } = data;
-
-    console.log('=== ANALYTICS DATA PROCESSING START ===');
-    console.log('Raw data received:', {
-      incomeStreams: incomeStreams?.length || 0,
-      expenses: expenses?.length || 0,
-      incomeEntries: incomeEntries?.length || 0,
-      expenseEntries: expenseEntries?.length || 0,
-      oneTimeIncome: oneTimeIncome?.length || 0,
-      oneTimeExpense: oneTimeExpense?.length || 0
-    });
-
-    // Log sample data to see structure
-    if (incomeEntries?.length > 0) {
-      console.log('Sample income entry:', incomeEntries[0]);
-    }
-    if (expenseEntries?.length > 0) {
-      console.log('Sample expense entry:', expenseEntries[0]);
-    }
-    if (oneTimeIncome?.length > 0) {
-      console.log('Sample one-time income:', oneTimeIncome[0]);
-    }
-    if (oneTimeExpense?.length > 0) {
-      console.log('Sample one-time expense:', oneTimeExpense[0]);
-    }
-
-    // Calculate totals
-    const totalRecurringIncome = incomeEntries?.reduce((sum: number, entry: any) => sum + entry.amount, 0) || 0;
-    const totalOneTimeIncome = oneTimeIncome?.reduce((sum: number, entry: any) => sum + entry.amount, 0) || 0;
-    const totalIncome = totalRecurringIncome + totalOneTimeIncome;
-
-    const totalRecurringExpenses = expenseEntries?.reduce((sum: number, entry: any) => sum + entry.amount, 0) || 0;
-    const totalOneTimeExpenses = oneTimeExpense?.reduce((sum: number, entry: any) => sum + entry.amount, 0) || 0;
-    const totalExpenses = totalRecurringExpenses + totalOneTimeExpenses;
-
-    const netFlow = totalIncome - totalExpenses;
-
-    console.log('=== TOTALS CALCULATED ===');
-    console.log('Total recurring income:', totalRecurringIncome);
-    console.log('Total one-time income:', totalOneTimeIncome);
-    console.log('Total income:', totalIncome);
-    console.log('Total recurring expenses:', totalRecurringExpenses);
-    console.log('Total one-time expenses:', totalOneTimeExpenses);
-    console.log('Total expenses:', totalExpenses);
-    console.log('Net flow:', netFlow);
-
-    // Income by category
-    console.log('=== PROCESSING INCOME BY CATEGORY ===');
-    const incomeByCategory = processIncomeByCategory([...(incomeEntries || []), ...(oneTimeIncome || [])]);
-    console.log('Income by category result:', incomeByCategory);
-    
-    // Expenses by category
-    console.log('=== PROCESSING EXPENSES BY CATEGORY ===');
-    const expensesByCategory = processExpensesByCategory([...(expenseEntries || []), ...(oneTimeExpense || [])]);
-    console.log('Expenses by category result:', expensesByCategory);
-
-    // Monthly trends
-    console.log('=== PROCESSING MONTHLY TRENDS ===');
-    const monthlyTrends = processMonthlyTrends(incomeEntries || [], expenseEntries || [], oneTimeIncome || [], oneTimeExpense || []);
-
-    // Top income streams
-    const topIncomeStreams = (incomeStreams || [])
-      .map((stream: any) => ({
-        name: stream.name,
-        amount: Number(stream.actualMonthly || stream.expectedMonthly),
-        type: stream.type
-      }))
-      .sort((a: any, b: any) => b.amount - a.amount)
-      .slice(0, 5);
-
-    console.log('Top income streams:', topIncomeStreams);
-
-    // Top expenses
-    const topExpenses = (expenses || [])
-      .map((expense: any) => ({
-        name: expense.name,
-        amount: Number(expense.amount),
-        category: expense.category
-      }))
-      .sort((a: any, b: any) => b.amount - a.amount)
-      .slice(0, 5);
-
-    console.log('Top expenses:', topExpenses);
-
-    // Financial health metrics
-    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
-    const expenseRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
-    
-    // Calculate growth rates (simplified - would need historical data for accuracy)
-    const incomeGrowth = 5.2; // Placeholder
-    const expenseGrowth = 2.8; // Placeholder
-
-    const result = {
-      totalIncome,
-      totalExpenses,
-      netFlow,
-      incomeByCategory,
-      expensesByCategory,
-      monthlyTrends,
-      topIncomeStreams,
-      topExpenses,
-      financialHealth: {
-        savingsRate,
-        expenseRatio,
-        incomeGrowth,
-        expenseGrowth
-      }
-    };
-
-    console.log('=== FINAL ANALYTICS DATA ===');
-    console.log('Final processed data:', result);
-    console.log('=== ANALYTICS DATA PROCESSING END ===');
-    return result;
-  };
-
-  // Process income by category
-  const processIncomeByCategory = (allIncomeEntries: any[]) => {
-    const categoryTotals: { [key: string]: number } = {};
-    
-    allIncomeEntries.forEach(entry => {
-      const category = entry.category || (entry.incomeStream?.type) || 'OTHER';
-      categoryTotals[category] = (categoryTotals[category] || 0) + entry.amount;
-    });
-
-    return Object.entries(categoryTotals)
-      .map(([name, value], index) => ({
-        name: formatCategoryName(name),
-        value,
-        color: INCOME_COLORS[index % INCOME_COLORS.length]
-      }))
-      .sort((a, b) => b.value - a.value);
-  };
-
-  // Process expenses by category  
-  const processExpensesByCategory = (allExpenseEntries: any[]) => {
-    const categoryTotals: { [key: string]: number } = {};
-    
-    allExpenseEntries.forEach(entry => {
-      const category = entry.category || (entry.expense?.category) || 'OTHER';
-      categoryTotals[category] = (categoryTotals[category] || 0) + entry.amount;
-    });
-
-    return Object.entries(categoryTotals)
-      .map(([name, value], index) => ({
-        name: formatCategoryName(name),
-        value,
-        color: EXPENSE_COLORS[index % EXPENSE_COLORS.length]
-      }))
-      .sort((a, b) => b.value - a.value);
-  };
-
-  // Process monthly trends
-  const processMonthlyTrends = (incomeEntries: any[], expenseEntries: any[], oneTimeIncome: any[], oneTimeExpense: any[]) => {
-    console.log('=== MONTHLY TRENDS PROCESSING START ===');
-    const monthlyData: { [key: string]: { income: number; expenses: number; month: string; date: string } } = {};
-
-    console.log('Processing monthly trends with:', {
-      incomeEntries: incomeEntries.length,
-      expenseEntries: expenseEntries.length,
-      oneTimeIncome: oneTimeIncome.length,
-      oneTimeExpense: oneTimeExpense.length
-    });
-
-    // Log all entries to see their data structure
-    console.log('All income entries:', incomeEntries);
-    console.log('All expense entries:', expenseEntries);
-    console.log('All one-time income:', oneTimeIncome);
-    console.log('All one-time expenses:', oneTimeExpense);
-
-    // Process recurring income entries
-    console.log('=== PROCESSING RECURRING INCOME ENTRIES ===');
-    incomeEntries.forEach((entry, index) => {
-      console.log(`Processing income entry ${index}:`, entry);
-      try {
-        const date = new Date(entry.month);
-        console.log('Parsed date:', date);
-        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
-        const monthName = date.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-        console.log('Month key:', monthKey, 'Month name:', monthName);
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { income: 0, expenses: 0, month: monthName, date: monthKey };
-        }
-        
-        monthlyData[monthKey].income += entry.amount;
-        console.log('Updated monthly data for', monthKey, ':', monthlyData[monthKey]);
-      } catch (error) {
-        console.error('Error processing income entry:', error, entry);
-      }
-    });
-
-    // Process recurring expense entries
-    console.log('=== PROCESSING RECURRING EXPENSE ENTRIES ===');
-    expenseEntries.forEach((entry, index) => {
-      console.log(`Processing expense entry ${index}:`, entry);
-      try {
-        const date = new Date(entry.month);
-        console.log('Parsed date:', date);
-        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
-        const monthName = date.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-        console.log('Month key:', monthKey, 'Month name:', monthName);
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { income: 0, expenses: 0, month: monthName, date: monthKey };
-        }
-        
-        monthlyData[monthKey].expenses += entry.amount;
-        console.log('Updated monthly data for', monthKey, ':', monthlyData[monthKey]);
-      } catch (error) {
-        console.error('Error processing expense entry:', error, entry);
-      }
-    });
-
-    // Process one-time income entries
-    console.log('=== PROCESSING ONE-TIME INCOME ENTRIES ===');
-    oneTimeIncome.forEach((entry, index) => {
-      console.log(`Processing one-time income entry ${index}:`, entry);
-      try {
-        const date = new Date(entry.date);
-        console.log('Parsed date:', date);
-        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
-        const monthName = date.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-        console.log('Month key:', monthKey, 'Month name:', monthName);
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { income: 0, expenses: 0, month: monthName, date: monthKey };
-        }
-        
-        monthlyData[monthKey].income += entry.amount;
-        console.log('Updated monthly data for', monthKey, ':', monthlyData[monthKey]);
-      } catch (error) {
-        console.error('Error processing one-time income entry:', error, entry);
-      }
-    });
-
-    // Process one-time expense entries
-    console.log('=== PROCESSING ONE-TIME EXPENSE ENTRIES ===');
-    oneTimeExpense.forEach((entry, index) => {
-      console.log(`Processing one-time expense entry ${index}:`, entry);
-      try {
-        const date = new Date(entry.date);
-        console.log('Parsed date:', date);
-        const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
-        const monthName = date.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-        console.log('Month key:', monthKey, 'Month name:', monthName);
-        
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { income: 0, expenses: 0, month: monthName, date: monthKey };
-        }
-        
-        monthlyData[monthKey].expenses += entry.amount;
-        console.log('Updated monthly data for', monthKey, ':', monthlyData[monthKey]);
-      } catch (error) {
-        console.error('Error processing one-time expense entry:', error, entry);
-      }
-    });
-
-    console.log('=== MONTHLY DATA AGGREGATED ===');
-    console.log('Monthly data object:', monthlyData);
-    console.log('Monthly data keys:', Object.keys(monthlyData));
-
-    // If no data, create some placeholder data for the current month
-    if (Object.keys(monthlyData).length === 0) {
-      console.log('No monthly data found, creating placeholder');
-      const currentDate = new Date();
-      const monthKey = currentDate.toISOString().slice(0, 7);
-      const monthName = currentDate.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
-      
-      monthlyData[monthKey] = { income: 0, expenses: 0, month: monthName, date: monthKey };
-      console.log('Placeholder data created:', monthlyData[monthKey]);
-    }
-
-    const result = Object.values(monthlyData)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(-12) // Last 12 months
-      .map(item => ({
-        ...item,
-        net: item.income - item.expenses
-      }));
-
-    console.log('=== FINAL MONTHLY TRENDS RESULT ===');
-    console.log('Final monthly trends result:', result);
-    console.log('Result length:', result.length);
-    console.log('=== MONTHLY TRENDS PROCESSING END ===');
-    return result;
-  };
-
-  // Format category names
-  const formatCategoryName = (category: string) => {
-    const categoryMap: { [key: string]: string } = {
-      'FREELANCE': 'Freelance',
-      'AFFILIATE': 'Affiliate',
-      'ADSENSE': 'AdSense',
-      'GIGS': 'Gigs',
-      'BONUS': 'Bonus',
-      'GIFT': 'Gift',
-      'FOOD': 'Food & Dining',
-      'TRANSPORTATION': 'Transportation',
-      'HOUSING': 'Housing',
-      'UTILITIES': 'Utilities',
-      'SHOPPING': 'Shopping',
-      'HEALTHCARE': 'Healthcare',
-      'ENTERTAINMENT': 'Entertainment',
-      'BUSINESS': 'Business',
-      'OTHER': 'Other'
-    };
-    return categoryMap[category] || category;
-  };
+  }, [user?.id, processAnalyticsData]);
 
   useEffect(() => {
     if (user?.id && !authLoading) {
       fetchAnalyticsData();
     }
-  }, [user?.id, authLoading, selectedTimeRange, selectedYear]);
+  }, [user?.id, authLoading, selectedTimeRange, fetchAnalyticsData]);
 
   // Custom tooltip component
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
               {entry.name}: {formatCurrency(entry.value)}
             </p>

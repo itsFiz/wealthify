@@ -18,7 +18,7 @@ function getMonthStart(year: number, month: number): Date {
  */
 function generateMonthsBetween(startDate: Date, endDate: Date): Date[] {
   const months: Date[] = [];
-  let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
   const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
   
   while (current <= end) {

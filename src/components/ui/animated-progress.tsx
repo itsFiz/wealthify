@@ -164,7 +164,7 @@ export function MilestoneProgress({
 }
 
 // XP-style progress bar
-interface XPProgressProps extends AnimatedProgressProps {
+interface XPProgressProps extends Omit<AnimatedProgressProps, 'value'> {
   level?: number;
   currentXP?: number;
   nextLevelXP?: number;
@@ -179,8 +179,6 @@ export function XPProgress({
   className,
   ...props
 }: XPProgressProps) {
-  // Remove className and value from props to avoid conflicts
-  const { value, ...otherProps } = props;
   
   return (
     <div className={cn('space-y-2', className)}>
@@ -202,7 +200,7 @@ export function XPProgress({
           to: 'to-orange-500',
           trail: 'bg-yellow-100/20'
         }}
-        {...otherProps}
+        {...props}
       />
     </div>
   );

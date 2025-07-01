@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,6 @@ import {
   Edit,
   Trash2,
   Search,
-  Settings,
   GiftIcon,
   Loader,
   Utensils,
@@ -33,7 +32,6 @@ import {
   Gamepad2,
   Briefcase,
   AlertTriangle,
-  Check,
   X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -74,6 +72,52 @@ interface ExpenseEntry {
   isOneTime?: boolean;
 }
 
+interface ApiRecurringIncomeEntry {
+  id: string;
+  amount: number;
+  month: string;
+  notes?: string;
+  createdAt: string;
+  incomeStream?: {
+    id: string;
+    name: string;
+    type: string;
+  };
+}
+
+interface ApiRecurringExpenseEntry {
+  id: string;
+  amount: number;
+  month: string;
+  notes?: string;
+  createdAt: string;
+  expense?: {
+    id: string;
+    name: string;
+    category: string;
+  };
+}
+
+interface ApiOneTimeIncomeEntry {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  category?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+interface ApiOneTimeExpenseEntry {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  category?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export default function EntriesPage() {
   const { user, isLoading: authLoading } = useAuth();
   
@@ -83,9 +127,11 @@ export default function EntriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Filter states
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'custom' | 'preset'>('preset');
+  const [presetFilter, setPresetFilter] = useState<'current-month' | 'last-3-months' | 'last-6-months' | 'last-year' | 'all-time'>('current-month');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   
   // Form states
   const [showIncomeForm, setShowIncomeForm] = useState(false);
@@ -139,20 +185,54 @@ export default function EntriesPage() {
   });
 
   // Fetch data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user?.id) return;
     
     setIsLoading(true);
     try {
-      // Helper function to build query string only when filters are applied
+      // Helper function to build query string based on filter type
       const buildQueryString = () => {
         const params = new URLSearchParams();
-        if (selectedYear !== 'all') {
-          params.append('year', selectedYear);
+        
+        if (filterType === 'preset') {
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth() + 1;
+          
+          switch (presetFilter) {
+            case 'current-month':
+              params.append('year', currentYear.toString());
+              params.append('month', currentMonth.toString());
+              break;
+            case 'last-3-months':
+              const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+              params.append('startDate', threeMonthsAgo.toISOString().split('T')[0]);
+              params.append('endDate', now.toISOString().split('T')[0]);
+              break;
+            case 'last-6-months':
+              const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+              params.append('startDate', sixMonthsAgo.toISOString().split('T')[0]);
+              params.append('endDate', now.toISOString().split('T')[0]);
+              break;
+            case 'last-year':
+              const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+              params.append('startDate', lastYear.toISOString().split('T')[0]);
+              params.append('endDate', now.toISOString().split('T')[0]);
+              break;
+            case 'all-time':
+              // No date filters for all-time
+              break;
+          }
+        } else {
+          // Custom date range
+          if (customStartDate) {
+            params.append('startDate', customStartDate);
+          }
+          if (customEndDate) {
+            params.append('endDate', customEndDate);
+          }
         }
-        if (selectedMonth !== 'all') {
-          params.append('month', selectedMonth);
-        }
+        
         const queryString = params.toString();
         return queryString ? `?${queryString}` : '';
       };
@@ -172,8 +252,8 @@ export default function EntriesPage() {
 
       // Process recurring income entries
       if (recurringIncomeRes.ok) {
-        const recurringIncomeData = await recurringIncomeRes.json();
-        const formattedRecurringIncome = recurringIncomeData.map((entry: any) => ({
+        const recurringIncomeData = await recurringIncomeRes.json() as ApiRecurringIncomeEntry[];
+        const formattedRecurringIncome = recurringIncomeData.map((entry: ApiRecurringIncomeEntry) => ({
           id: entry.id,
           name: entry.incomeStream?.name || 'Unknown Income Stream',
           amount: entry.amount,
@@ -186,10 +266,10 @@ export default function EntriesPage() {
         }));
         
         // Process one-time income entries
-        let oneTimeIncomeData: any[] = [];
+        let oneTimeIncomeData: IncomeEntry[] = [];
         if (oneTimeIncomeRes.ok) {
-          oneTimeIncomeData = await oneTimeIncomeRes.json();
-          oneTimeIncomeData = oneTimeIncomeData.map((entry: any) => ({
+          const oneTimeData = await oneTimeIncomeRes.json() as ApiOneTimeIncomeEntry[];
+          oneTimeIncomeData = oneTimeData.map((entry: ApiOneTimeIncomeEntry) => ({
             ...entry,
             date: new Date(entry.date),
             createdAt: new Date(entry.createdAt),
@@ -203,8 +283,8 @@ export default function EntriesPage() {
 
       // Process recurring expense entries
       if (recurringExpenseRes.ok) {
-        const recurringExpenseData = await recurringExpenseRes.json();
-        const formattedRecurringExpenses = recurringExpenseData.map((entry: any) => ({
+        const recurringExpenseData = await recurringExpenseRes.json() as ApiRecurringExpenseEntry[];
+        const formattedRecurringExpenses = recurringExpenseData.map((entry: ApiRecurringExpenseEntry) => ({
           id: entry.id,
           name: entry.expense?.name || 'Unknown Expense',
           amount: entry.amount,
@@ -217,10 +297,10 @@ export default function EntriesPage() {
         }));
         
         // Process one-time expense entries
-        let oneTimeExpenseData: any[] = [];
+        let oneTimeExpenseData: ExpenseEntry[] = [];
         if (oneTimeExpenseRes.ok) {
-          oneTimeExpenseData = await oneTimeExpenseRes.json();
-          oneTimeExpenseData = oneTimeExpenseData.map((entry: any) => ({
+          const oneTimeData = await oneTimeExpenseRes.json() as ApiOneTimeExpenseEntry[];
+          oneTimeExpenseData = oneTimeData.map((entry: ApiOneTimeExpenseEntry) => ({
             ...entry,
             date: new Date(entry.date),
             createdAt: new Date(entry.createdAt),
@@ -237,13 +317,13 @@ export default function EntriesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id, filterType, presetFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
     if (user?.id && !authLoading) {
       fetchData();
     }
-  }, [user?.id, authLoading, selectedYear, selectedMonth]);
+  }, [user?.id, authLoading, fetchData]);
 
   // Create income entry
   const handleCreateIncomeEntry = async (e: React.FormEvent) => {
@@ -509,6 +589,62 @@ export default function EntriesPage() {
   const totalExpenses = filteredExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
   const netFlow = totalIncome - totalExpenses;
 
+  // Get filter display text
+  const getFilterDisplayText = () => {
+    if (filterType === 'preset') {
+      switch (presetFilter) {
+        case 'current-month':
+          return 'Current Month';
+        case 'last-3-months':
+          return 'Last 3 Months';
+        case 'last-6-months':
+          return 'Last 6 Months';
+        case 'last-year':
+          return 'Last Year';
+        case 'all-time':
+          return 'All Time';
+        default:
+          return 'Current Month';
+      }
+    } else {
+      if (customStartDate && customEndDate) {
+        const start = new Date(customStartDate).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
+        const end = new Date(customEndDate).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' });
+        return `${start} - ${end}`;
+      } else if (customStartDate) {
+        return `From ${new Date(customStartDate).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}`;
+      } else if (customEndDate) {
+        return `Until ${new Date(customEndDate).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}`;
+      }
+      return 'Custom Range';
+    }
+  };
+
+  // Get filter description
+  const getFilterDescription = () => {
+    if (filterType === 'preset') {
+      switch (presetFilter) {
+        case 'current-month':
+          return `${new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} entries`;
+        case 'last-3-months':
+          return 'Last 3 months of entries';
+        case 'last-6-months':
+          return 'Last 6 months of entries';
+        case 'last-year':
+          return 'Last 12 months of entries';
+        case 'all-time':
+          return 'All entries in your account';
+        default:
+          return 'Current month entries';
+      }
+    } else {
+      if (customStartDate && customEndDate) {
+        return `Custom date range entries`;
+      }
+      return 'Custom filtered entries';
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -663,81 +799,140 @@ export default function EntriesPage() {
         {/* Filters */}
         <Card className="border-gray-200 bg-white">
           <CardContent className="p-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Filters:</span>
+            <div className="space-y-4">
+              {/* Filter Type Selection */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Filter Options:</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    size="sm"
+                    variant={filterType === 'preset' ? 'default' : 'outline'}
+                    onClick={() => setFilterType('preset')}
+                    className="text-xs"
+                  >
+                    Quick Filters
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterType === 'custom' ? 'default' : 'outline'}
+                    onClick={() => setFilterType('custom')}
+                    className="text-xs"
+                  >
+                    Custom Range
+                  </Button>
+                </div>
               </div>
 
-              {/* Quick toggle for All Time vs Current Month */}
-              <div className="flex items-center space-x-2">
-                <Button
-                  size="sm"
-                  variant={selectedYear === 'all' && selectedMonth === 'all' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSelectedYear('all');
-                    setSelectedMonth('all');
-                  }}
-                  className="text-xs"
-                >
-                  All Time
-                </Button>
-                <Button
-                  size="sm"
-                  variant={selectedYear !== 'all' && selectedMonth !== 'all' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSelectedYear(new Date().getFullYear().toString());
-                    setSelectedMonth((new Date().getMonth() + 1).toString());
-                  }}
-                  className="text-xs"
-                >
-                  Current Month
-                </Button>
-              </div>
-              
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All years</SelectItem>
-                  {Array.from({ length: 10 }, (_, i) => {
-                    const year = new Date().getFullYear() - i;
-                    return (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              {/* Preset Filters */}
+              {filterType === 'preset' && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={presetFilter === 'current-month' ? 'default' : 'outline'}
+                    onClick={() => setPresetFilter('current-month')}
+                    className="text-xs"
+                  >
+                    Current Month
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={presetFilter === 'last-3-months' ? 'default' : 'outline'}
+                    onClick={() => setPresetFilter('last-3-months')}
+                    className="text-xs"
+                  >
+                    Last 3 Months
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={presetFilter === 'last-6-months' ? 'default' : 'outline'}
+                    onClick={() => setPresetFilter('last-6-months')}
+                    className="text-xs"
+                  >
+                    Last 6 Months
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={presetFilter === 'last-year' ? 'default' : 'outline'}
+                    onClick={() => setPresetFilter('last-year')}
+                    className="text-xs"
+                  >
+                    Last Year
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={presetFilter === 'all-time' ? 'default' : 'outline'}
+                    onClick={() => setPresetFilter('all-time')}
+                    className="text-xs"
+                  >
+                    All Time
+                  </Button>
+                </div>
+              )}
 
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="All months" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All months</SelectItem>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const monthNum = i + 1;
-                    const monthName = new Date(2024, i).toLocaleDateString('en-MY', { month: 'long' });
-                    return (
-                      <SelectItem key={monthNum} value={monthNum.toString()}>
-                        {monthName}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              {/* Custom Date Range */}
+              {filterType === 'custom' && (
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="startDate" className="text-xs font-medium text-gray-600">From:</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="w-40 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="endDate" className="text-xs font-medium text-gray-600">To:</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="w-40 text-xs"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setCustomStartDate('');
+                      setCustomEndDate('');
+                    }}
+                    className="text-xs"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              )}
 
-              <div className="flex items-center space-x-2">
+              {/* Search */}
+              <div className="flex items-center space-x-2 pt-2 border-t border-gray-100">
                 <Search className="h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search entries..."
+                  placeholder="Search entries by name or notes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-64"
                 />
+              </div>
+
+              {/* Active Filter Display */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500">Active Filter:</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {getFilterDisplayText()}
+                  </Badge>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-500">{getFilterDescription()}</span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  {filteredIncomeEntries.length + filteredExpenseEntries.length} total entries
+                </div>
               </div>
             </div>
           </CardContent>
@@ -751,20 +946,15 @@ export default function EntriesPage() {
                 <div>
                   <p className="text-sm text-gray-600">
                     Total Income
-                    {(selectedYear !== 'all' || selectedMonth !== 'all') ? (
-                      <span className="text-xs text-blue-600 font-medium"> (Current Month)</span>
-                    ) : (
-                      <span className="text-xs text-green-600 font-medium"> (All Time)</span>
-                    )}
+                    <span className="text-xs text-blue-600 font-medium ml-1">
+                      ({getFilterDisplayText()})
+                    </span>
                   </p>
                   <div className="text-2xl font-semibold text-green-600">
                     {formatCurrency(totalIncome)}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(selectedYear === 'all' && selectedMonth === 'all') 
-                      ? `All-time income from ${filteredIncomeEntries.length} entries`
-                      : `${new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} - ${filteredIncomeEntries.length} entries`
-                    }
+                    {getFilterDescription()} • {filteredIncomeEntries.length} entries
                   </div>
                 </div>
                 <div className="h-8 w-8 bg-green-50 rounded-full flex items-center justify-center">
@@ -780,20 +970,15 @@ export default function EntriesPage() {
                 <div>
                   <p className="text-sm text-gray-600">
                     Total Expenses
-                    {(selectedYear !== 'all' || selectedMonth !== 'all') ? (
-                      <span className="text-xs text-blue-600 font-medium"> (Current Month)</span>
-                    ) : (
-                      <span className="text-xs text-green-600 font-medium"> (All Time)</span>
-                    )}
+                    <span className="text-xs text-blue-600 font-medium ml-1">
+                      ({getFilterDisplayText()})
+                    </span>
                   </p>
                   <div className="text-2xl font-semibold text-red-600">
                     {formatCurrency(totalExpenses)}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(selectedYear === 'all' && selectedMonth === 'all') 
-                      ? `All-time expenses from ${filteredExpenseEntries.length} entries`
-                      : `${new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} - ${filteredExpenseEntries.length} entries`
-                    }
+                    {getFilterDescription()} • {filteredExpenseEntries.length} entries
                   </div>
                 </div>
                 <div className="h-8 w-8 bg-red-50 rounded-full flex items-center justify-center">
@@ -809,20 +994,15 @@ export default function EntriesPage() {
                 <div>
                   <p className="text-sm text-gray-600">
                     Net Flow
-                    {(selectedYear !== 'all' || selectedMonth !== 'all') ? (
-                      <span className="text-xs text-blue-600 font-medium"> (Current Month)</span>
-                    ) : (
-                      <span className="text-xs text-green-600 font-medium"> (All Time)</span>
-                    )}
+                    <span className="text-xs text-blue-600 font-medium ml-1">
+                      ({getFilterDisplayText()})
+                    </span>
                   </p>
                   <div className={`text-2xl font-semibold ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(netFlow)}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {(selectedYear === 'all' && selectedMonth === 'all') 
-                      ? 'Lifetime net flow'
-                      : `${new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} net flow`
-                    }
+                    {getFilterDescription()} net flow
                   </div>
                 </div>
                 <div className={`h-8 w-8 rounded-full flex items-center justify-center ${netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
@@ -1741,13 +1921,13 @@ export default function EntriesPage() {
                       return (
                         <>
                           <p className="text-sm text-gray-800">
-                            Are you sure you want to delete <strong className="text-red-600">"{deletingEntry.name}"</strong>?
+                            Are you sure you want to delete <strong className="text-red-600">&quot;{deletingEntry.name}&quot;</strong>?
                           </p>
                           <p className="text-xs text-gray-600 mt-2">
                             {isOneTimeEntry ? (
                               <>This one-time {deletingEntry.type} entry will be permanently removed from your records.</>
                             ) : (
-                              <>This will only delete this specific month's {deletingEntry.type} entry. The recurring {deletingEntry.type} stream will remain active and continue generating future entries.</>
+                              <>This will only delete this specific month&apos;s {deletingEntry.type} entry. The recurring {deletingEntry.type} stream will remain active and continue generating future entries.</>
                             )}
                           </p>
                         </>

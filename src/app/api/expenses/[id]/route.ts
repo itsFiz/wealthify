@@ -9,9 +9,10 @@ import { z } from 'zod';
 // GET /api/expenses/[id] - Get specific expense
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -28,7 +29,7 @@ export async function GET(
 
     const expense = await prisma.expense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
       include: {
@@ -62,9 +63,10 @@ export async function GET(
 // PUT /api/expenses/[id] - Update expense
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -82,7 +84,7 @@ export async function PUT(
     // Check if expense exists and belongs to user
     const existingExpense = await prisma.expense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -112,7 +114,7 @@ export async function PUT(
     console.log('🔄 Final update data:', updateData);
 
     const updatedExpense = await prisma.expense.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         entries: {
@@ -140,11 +142,11 @@ export async function PUT(
         console.log(`   - Amount changed: ${amountChanged} (RM${oldAmount} → RM${newAmount})`);
         
         // Delete existing entries and regenerate from the new date
-        const deleteResult = await deleteExpenseEntries(params.id);
+        const deleteResult = await deleteExpenseEntries(id);
         console.log(`🗑️ ${deleteResult.message}`);
         
         // Regenerate entries with new date/amount
-        const generateResult = await generateExpenseEntries(params.id);
+        const generateResult = await generateExpenseEntries(id);
         console.log(`✅ ${generateResult.message}`);
         } catch (entryError) {
         console.error('❌ Failed to regenerate expense entries:', entryError);
@@ -182,9 +184,10 @@ export async function PUT(
 // DELETE /api/expenses/[id] - Delete expense
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -202,7 +205,7 @@ export async function DELETE(
     // Check if expense exists and belongs to user
     const existingExpense = await prisma.expense.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -213,7 +216,7 @@ export async function DELETE(
 
     // Delete associated entries first
     try {
-      const result = await deleteExpenseEntries(params.id);
+      const result = await deleteExpenseEntries(id);
       console.log(`🗑️ ${result.message}`);
     } catch (entryError) {
       console.error('❌ Failed to delete expense entries:', entryError);
@@ -222,7 +225,7 @@ export async function DELETE(
 
     // Delete the expense
     await prisma.expense.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     console.log(`✅ Successfully deleted expense: ${existingExpense.name}`);

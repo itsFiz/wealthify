@@ -10,12 +10,9 @@ import {
   CreditCard,
   Home,
   Car,
-  ShoppingCart,
   Utensils,
-  Shirt,
   Zap,
   Gamepad2,
-  GraduationCap,
   Heart,
   Archive,
   DollarSign,
@@ -140,7 +137,7 @@ export function ExpenseForm({ expense, onSubmit, onCancel, isSubmitting = false 
     }
   };
 
-  const updateFormData = (field: keyof ExpenseFormData, value: any) => {
+  const updateFormData = (field: keyof ExpenseFormData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {

@@ -9,11 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { IncomeStream, IncomeType } from '@/types';
+import { IncomeStream, IncomeType, Frequency } from '@/types';
 import { X, DollarSign } from 'lucide-react';
-import { z } from 'zod';
 
-type FormData = z.infer<typeof createIncomeStreamSchema>;
+interface FormData {
+  name: string;
+  type: IncomeType;
+  expectedMonthly: number;
+  actualMonthly?: number;
+  frequency?: Frequency;
+  earnedDate?: string;
+}
 
 interface IncomeStreamFormProps {
   incomeStream?: IncomeStream;
@@ -28,6 +34,13 @@ const incomeTypeLabels: Record<IncomeType, string> = {
   INVESTMENT: 'Investment Returns',
   PASSIVE: 'Passive Income',
   OTHER: 'Other',
+};
+
+const frequencyLabels: Record<Frequency, string> = {
+  MONTHLY: 'Monthly',
+  WEEKLY: 'Weekly',
+  YEARLY: 'Yearly',
+  ONE_TIME: 'One Time',
 };
 
 export function IncomeStreamForm({ incomeStream, onSubmit, onCancel }: IncomeStreamFormProps) {
@@ -46,15 +59,18 @@ export function IncomeStreamForm({ incomeStream, onSubmit, onCancel }: IncomeStr
       type: incomeStream.type,
       expectedMonthly: incomeStream.expectedMonthly,
       actualMonthly: incomeStream.actualMonthly || undefined,
+      frequency: incomeStream.frequency,
     } : {
       name: '',
       type: 'SALARY' as IncomeType,
       expectedMonthly: 0,
       actualMonthly: undefined,
+      frequency: Frequency.MONTHLY,
     },
   });
 
   const watchedType = watch('type');
+  const watchedFrequency = watch('frequency');
 
   const handleFormSubmit = async (data: FormData) => {
     setIsSubmitting(true);
@@ -127,6 +143,28 @@ export function IncomeStreamForm({ incomeStream, onSubmit, onCancel }: IncomeStr
               </Select>
               {errors.type && (
                 <p className="text-sm text-destructive">{errors.type.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Frequency</Label>
+              <Select
+                value={watchedFrequency}
+                onValueChange={(value: string) => setValue('frequency', value as Frequency)}
+              >
+                <SelectTrigger className={errors.frequency ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(frequencyLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.frequency && (
+                <p className="text-sm text-destructive">{errors.frequency.message}</p>
               )}
             </div>
 

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Wallet, ArrowRight, Shield, Mail, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Shield, Mail, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 export default function ForgotPasswordPage() {
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-xl text-muted-foreground leading-relaxed"
             >
-              Don't worry, it happens to the best of us. We'll send you a link to reset your password.
+              Don&apos;t worry, it happens to the best of us. We&apos;ll send you a link to reset your password.
             </motion.p>
           </div>
 
@@ -143,8 +143,8 @@ export default function ForgotPasswordPage() {
               </CardTitle>
               <CardDescription>
                 {isEmailSent 
-                  ? 'We\'ve sent a password reset link to your email address'
-                  : 'Enter your email address and we\'ll send you a reset link'
+                  ? "We've sent a password reset link to your email address"
+                  : "Enter your email address and we'll send you a reset link"
                 }
               </CardDescription>
             </CardHeader>
@@ -250,7 +250,7 @@ export default function ForgotPasswordPage() {
                       </Button>
 
                       <div className="text-center text-sm text-muted-foreground">
-                        Didn't receive the email?{' '}
+                        Didn&apos;t receive the email?{' '}
                         <button 
                           onClick={() => {
                             setIsEmailSent(false);

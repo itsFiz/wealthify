@@ -8,10 +8,7 @@ import {
   TrendingDown, 
   Target, 
   ArrowRight, 
-  ArrowDown,
-  ArrowUp,
   Wallet,
-  Calendar,
   Info,
   CheckCircle
 } from 'lucide-react';
@@ -156,7 +153,7 @@ export function FinancialConceptsExplainer({ isOpen = true, onClose }: Financial
                 <div className="bg-white p-3 rounded border">
                   <div className="text-sm font-medium mb-2">🔄 Recurring Calculation Example</div>
                   <p className="text-sm text-muted-foreground">
-                    If you add a RM3,000/month salary in March 2025, and it's now May 2025:
+                    If you add a RM3,000/month salary in March 2025, and it&apos;s now May 2025:
                     <br />• March: +RM3,000 • April: +RM3,000 • May: +RM3,000
                     <br />• <strong>Total accumulated: RM9,000</strong>
                   </p>
@@ -197,7 +194,7 @@ export function FinancialConceptsExplainer({ isOpen = true, onClose }: Financial
                 <div className="bg-white p-3 rounded border">
                   <div className="text-sm font-medium mb-2">🔄 Recurring Calculation Example</div>
                   <p className="text-sm text-muted-foreground">
-                    If you add RM1,500/month rent in March 2025, and it's now May 2025:
+                    If you add RM1,500/month rent in March 2025, and it&apos;s now May 2025:
                     <br />• March: -RM1,500 • April: -RM1,500 • May: -RM1,500
                     <br />• <strong>Total accumulated: -RM4,500</strong>
                   </p>
@@ -224,14 +221,14 @@ export function FinancialConceptsExplainer({ isOpen = true, onClose }: Financial
                     <div>
                       <div className="font-medium text-green-700 mb-1">✅ What Goals Do:</div>
                       <ul className="space-y-1 text-green-700">
-                        <li>• Move money from "available" to "committed"</li>
+                        <li>• Move money from &ldquo;available&rdquo; to &ldquo;committed&rdquo;</li>
                         <li>• Track progress toward targets</li>
                         <li>• Help with financial discipline</li>
                         <li>• Total balance stays the same</li>
                       </ul>
                     </div>
                     <div>
-                      <div className="font-medium text-red-700 mb-1">❌ What Goals Don't Do:</div>
+                      <div className="font-medium text-red-700 mb-1">❌ What Goals Don&apos;t Do:</div>
                       <ul className="space-y-1 text-red-700">
                         <li>• Reduce your total balance</li>
                         <li>• Count as expenses in calculations</li>

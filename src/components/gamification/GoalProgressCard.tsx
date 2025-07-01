@@ -8,7 +8,6 @@ import { calculateGoalProgress, formatCurrency } from '@/lib/calculations/index'
 import type { Goal } from '@/types';
 import { 
   Target, 
-  Calendar,
   TrendingUp,
   Trophy,
   Zap,
@@ -21,7 +20,6 @@ import {
   TrendingUp as Investment,
   Plane,
   Briefcase,
-  DollarSign
 } from 'lucide-react';
 
 interface GoalProgressCardProps {
@@ -46,16 +44,9 @@ export function GoalProgressCard({
   
   // Calculate milestone levels (every 25%)
   const milestones = [25, 50, 75, 100];
-  const currentMilestone = milestones.find(m => progress < m) || 100;
   const completedMilestones = milestones.filter(m => progress >= m);
   
-  const getProgressColor = (progress: number) => {
-    if (progress >= 100) return 'bg-gradient-to-r from-green-500 to-emerald-500';
-    if (progress >= 75) return 'bg-gradient-to-r from-blue-500 to-purple-500';
-    if (progress >= 50) return 'bg-gradient-to-r from-yellow-500 to-orange-500';
-    if (progress >= 25) return 'bg-gradient-to-r from-orange-500 to-red-500';
-    return 'bg-gradient-to-r from-gray-400 to-gray-500';
-  };
+
 
   const getMilestoneIcon = (milestone: number) => {
     switch (milestone) {

@@ -605,8 +605,8 @@ export function convertToMonthlyAmount(amount: number, frequency: string): numbe
 
 // Enhanced lifestyle analysis with frequency consideration
 export function calculateLifestyleMetrics(
-  incomeStreams: any[],
-  expenses: any[]
+  incomeStreams: IncomeStream[],
+  expenses: Expense[]
 ) {
   // Calculate total monthly income from all streams
   const totalMonthlyIncome = incomeStreams.reduce((total, stream) => {
@@ -744,10 +744,9 @@ export function calculateBalanceProjections(
  * Calculate balance change from income/expense entries
  */
 export function calculateBalanceChange(
-  incomeStreams: any[],
-  expenses: any[],
-  previousBalance: number,
-  earnedDate?: Date
+  incomeStreams: IncomeStream[],
+  expenses: Expense[],
+  previousBalance: number
 ): {
   newBalance: number;
   balanceChange: number;
@@ -891,9 +890,9 @@ export function createEnhancedMonthlySnapshot(
   month: Date,
   currentBalance: number,
   previousBalance: number,
-  incomeStreams: any[],
-  expenses: any[],
-  goals: any[],
+  incomeStreams: IncomeStream[],
+  expenses: Expense[],
+  goals: Goal[],
   isProjected: boolean = false
 ) {
   const totalIncome = calculateMonthlyIncome(incomeStreams);
@@ -903,10 +902,10 @@ export function createEnhancedMonthlySnapshot(
   const savingsRate = calculateSavingsRate(totalIncome, totalExpenses);
   
   // Calculate goal metrics
-  const activeGoals = goals.filter((goal: any) => !goal.isCompleted);
-  const completedGoals = goals.filter((goal: any) => goal.isCompleted);
-  const totalGoalsValue = goals.reduce((sum: number, goal: any) => sum + Number(goal.targetAmount), 0);
-  const totalGoalsProgress = goals.reduce((sum: number, goal: any) => sum + Number(goal.currentAmount), 0);
+  const activeGoals = goals.filter((goal: Goal) => !goal.isCompleted);
+  const completedGoals = goals.filter((goal: Goal) => goal.isCompleted);
+  const totalGoalsValue = goals.reduce((sum: number, goal: Goal) => sum + Number(goal.targetAmount), 0);
+  const totalGoalsProgress = goals.reduce((sum: number, goal: Goal) => sum + Number(goal.currentAmount), 0);
   
   // Calculate health score
   const avgGoalProgress = totalGoalsValue > 0 ? (totalGoalsProgress / totalGoalsValue) * 100 : 0;
@@ -946,8 +945,8 @@ export function createEnhancedMonthlySnapshot(
  */
 export function calculateAccumulatedBalance(
   startingBalance: number,
-  incomeStreams: any[],
-  expenses: any[],
+  incomeStreams: IncomeStream[],
+  expenses: Expense[],
   fromDate?: Date
 ): {
   currentCalculatedBalance: number;

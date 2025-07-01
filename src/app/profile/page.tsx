@@ -9,18 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   User, 
-  Settings, 
   Bell, 
   Shield,
-  CreditCard,
   Download,
-  Upload,
   Edit,
   Camera,
   Mail,
   Phone,
   MapPin,
-  Calendar,
   Briefcase,
   DollarSign,
   Target,

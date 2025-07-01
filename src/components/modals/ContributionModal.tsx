@@ -2,11 +2,17 @@ import React from 'react';
 import { ContributionForm } from '@/components/forms/ContributionForm';
 import type { Goal } from '@/types';
 
+interface ContributionFormData {
+  amount: number;
+  month: Date;
+  notes?: string;
+}
+
 interface ContributionModalProps {
   isOpen: boolean;
   onClose: () => void;
   goal?: Goal;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: ContributionFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
 

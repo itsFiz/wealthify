@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { Goal, GoalContribution } from '@/types';
+import type { Goal } from '@/types';
 import { 
   Target, 
   DollarSign,
@@ -68,7 +67,7 @@ export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = fals
     }
   };
 
-  const updateFormData = (field: keyof ContributionFormData, value: any) => {
+  const updateFormData = (field: keyof ContributionFormData, value: string | number | Date) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -91,7 +90,7 @@ export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = fals
               Add Contribution
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Contribute to "{goal.name}"
+              Contribute to &quot;{goal.name}&quot;
             </p>
           </div>
         </div>
@@ -265,7 +264,7 @@ export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = fals
                 </div>
                 {progressAfterContribution >= 100 && (
                   <div className="text-center p-2 bg-green-100 rounded text-green-800 font-semibold text-sm">
-                    🎉 Congratulations! You'll complete this goal!
+                    🎉 Congratulations! You&apos;ll complete this goal!
                   </div>
                 )}
               </div>

@@ -20,9 +20,10 @@ const s3Client = new S3Client({
 // GET /api/goals/[id] - Get specific goal
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -39,7 +40,7 @@ export async function GET(
 
     const goal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id 
       },
       include: {
@@ -78,9 +79,10 @@ export async function GET(
 // PUT /api/goals/[id] - Update goal
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -98,7 +100,7 @@ export async function PUT(
     // Check if goal exists and belongs to user
     const existingGoal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id 
       },
     });
@@ -208,7 +210,7 @@ export async function PUT(
     }
 
     const updatedGoal = await prisma.goal.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...validatedData,
         imageUrl: imageUrl,
@@ -250,9 +252,10 @@ export async function PUT(
 // DELETE /api/goals/[id] - Delete goal
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -270,7 +273,7 @@ export async function DELETE(
     // Check if goal exists and belongs to user
     const existingGoal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id 
       },
     });
@@ -298,7 +301,7 @@ export async function DELETE(
 
     // Delete goal (contributions are deleted automatically due to cascade)
     await prisma.goal.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ message: 'Goal deleted successfully' });

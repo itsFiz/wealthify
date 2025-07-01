@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { useSession } from 'next-auth/react'
 import { UserRole } from '@prisma/client'
 import { 
@@ -21,6 +20,17 @@ export interface AuthUser extends RBACUser {
   image?: string | null
 }
 
+// Extended session user type to include the properties we need
+interface ExtendedSessionUser {
+  id: string
+  name?: string | null
+  email?: string | null
+  image?: string | null
+  role?: string | null
+  permissions?: string[]
+  isActive?: boolean
+}
+
 export function useAuth() {
   const { data: session, status } = useSession()
   
@@ -30,9 +40,9 @@ export function useAuth() {
     name: session.user.name,
     email: session.user.email,
     image: session.user.image,
-    role: (session.user as any).role || UserRole.USER,
-    permissions: (session.user as any).permissions || [],
-    isActive: (session.user as any).isActive ?? true,
+    role: (session.user as ExtendedSessionUser).role as UserRole || UserRole.USER,
+    permissions: (session.user as ExtendedSessionUser).permissions || [],
+    isActive: (session.user as ExtendedSessionUser).isActive ?? true,
   } : null
 
   return {

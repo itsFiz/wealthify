@@ -16,9 +16,10 @@ const s3Client = new S3Client({
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -36,7 +37,7 @@ export async function DELETE(
     // Get goal and verify ownership
     const goal = await prisma.goal.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         userId: user.id 
       }
     });
@@ -64,7 +65,7 @@ export async function DELETE(
 
       // Update goal to remove image URL
       const updatedGoal = await prisma.goal.update({
-        where: { id: params.id },
+        where: { id: id },
         data: { imageUrl: null },
         include: {
           contributions: true,
@@ -97,7 +98,7 @@ export async function DELETE(
       
       // Still update database even if R2 deletion fails
       const updatedGoal = await prisma.goal.update({
-        where: { id: params.id },
+        where: { id: id },
         data: { imageUrl: null },
         include: {
           contributions: true,
