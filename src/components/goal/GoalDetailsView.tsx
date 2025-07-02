@@ -30,6 +30,7 @@ import {
   Clock,
   CheckCircle,
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface GoalDetailsViewProps {
   goal: Goal;
@@ -177,7 +178,7 @@ export function GoalDetailsView({
           {/* Goal Image */}
           {goal.imageUrl && (
             <div className="relative rounded-xl overflow-hidden max-h-64">
-              <img 
+              <Image 
                 src={goal.imageUrl} 
                 alt={goal.name}
                 className="w-full h-full object-cover"

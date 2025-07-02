@@ -10,18 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard,
 
-  Target,
+    //Target,
   Calculator,
   FileText,
-  Settings,
+  //Settings,
   LogOut,
   Wallet,
-  PieChart,
-  Award,
+  //PieChart,
+  //Award,
   User,
-  HelpCircle,
+  //HelpCircle,
   Calendar,
-  CreditCard
+  //CreditCard
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -60,24 +60,24 @@ const navigationItems = [
         description: 'Monthly transactions',
         badge: 'New',
       },
-      {
-        name: 'Goals',
-        href: '/goals',
-        icon: Target,
-        description: 'Financial goals',
-      },
-      {
-        name: 'Budgets',
-        href: '/budgets',
-        icon: PieChart,
-        description: 'Budget planning',
-      },
-      {
-        name: 'Debts',
-        href: '/debts',
-        icon: CreditCard,
-        description: 'Debt management',
-      },
+      // {
+      //   name: 'Goals',
+      //   href: '/goals',
+      //   icon: Target,
+      //   description: 'Financial goals',
+      // },
+      // {
+      //   name: 'Budgets',
+      //   href: '/budgets',
+      //   icon: PieChart,
+      //   description: 'Budget planning',
+      // },
+      // {
+      //   name: 'Debts',
+      //   href: '/debts',
+      //   icon: CreditCard,
+      //   description: 'Debt management',
+      // },
     ],
   },
   {
@@ -88,39 +88,40 @@ const navigationItems = [
         href: '/simulator',
         icon: Calculator,
         description: 'Affordability calculator',
+        badge: 'New',
       },
       
-      {
-        name: 'Achievements',
-        href: '/achievements',
-        icon: Award,
-        description: 'Your milestones',
-        badge: '3',
-      },
+      // {
+      //   name: 'Achievements',
+      //   href: '/achievements',
+      //   icon: Award,
+      //   description: 'Your milestones',
+      //   badge: '3',
+      // },
     ],
   },
 ];
 
-const bottomItems = [
-  {
-    name: 'Profile',
-    href: '/profile',
-    icon: User,
-    description: 'Account settings',
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: Settings,
-    description: 'App preferences',
-  },
-  {
-    name: 'Help',
-    href: '/help',
-    icon: HelpCircle,
-    description: 'Support center',
-  },
-];
+// const bottomItems = [
+//   {
+//     name: 'Profile',
+//     href: '/profile',
+//     icon: User,
+//     description: 'Account settings',
+//   },
+//   {
+//     name: 'Settings',
+//     href: '/settings',
+//     icon: Settings,
+//     description: 'App preferences',
+//   },
+//   {
+//     name: 'Help',
+//     href: '/help',
+//     icon: HelpCircle,
+//     description: 'Support center',
+//   },
+// ];
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
@@ -262,7 +263,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="border-t border-white/10 p-3">
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           {bottomItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -286,7 +287,7 @@ export function Sidebar({ className }: SidebarProps) {
               </Link>
             );
           })}
-        </div>
+        </div> */}
         
         {/* Logout Button */}
         <div className="mt-3 pt-3 border-t border-white/10">

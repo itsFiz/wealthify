@@ -88,6 +88,7 @@ model User {
   balanceProjections BalanceProjection[]
   oneTimeIncomes OneTimeIncome[]
   oneTimeExpenses OneTimeExpense[]
+  purchasePlans PurchasePlan[]
   
   @@map("users")
 }
@@ -187,6 +188,27 @@ model OneTimeExpense {
   user      User     @relation(fields: [userId], references: [id])
   
   @@map("one_time_expense")
+}
+
+// Purchase Plans for Financial Simulator
+model PurchasePlan {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String   // e.g., "House Down Payment Plan", "Wedding Savings"
+  purchaseType      String   // house, vehicle, wedding, business, custom
+  targetAmount      Decimal
+  currentSaved      Decimal  @default(0)
+  desiredTimelineMonths Int
+  downPaymentRatio  Decimal? // For applicable purchases
+  appreciationRate  Decimal? // Annual rate as decimal
+  notes             String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id])
+  
+  @@map("purchase_plans")
 }
 
 // Goals & Milestones

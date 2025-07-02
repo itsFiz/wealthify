@@ -263,6 +263,22 @@ export interface GoalForecast {
   recommendations: string[];
 }
 
+export interface PurchasePlan {
+  id: string;
+  userId: string;
+  name: string;
+  purchaseType: 'house' | 'vehicle' | 'wedding' | 'business' | 'custom';
+  targetAmount: number;
+  currentSaved: number;
+  desiredTimelineMonths: number;
+  downPaymentRatio?: number;
+  appreciationRate?: number;
+  notes?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Predefined asset depreciation rates
 export const ASSET_DEPRECIATION_RATES: Record<string, AssetDepreciation> = {
   VEHICLE_SPORTS: {

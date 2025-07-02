@@ -16,6 +16,8 @@ import { ConfirmDeleteModal } from '@/components/modals/ConfirmDeleteModal';
 import { BalanceUpdateForm } from '@/components/forms/BalanceUpdateForm';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
+import { usePWA } from '@/hooks/usePWA';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { formatCurrency, formatPercentage, calculateAccumulatedBalance } from '@/lib/calculations/index';
 import toast from 'react-hot-toast';
 import { 
@@ -320,6 +322,7 @@ const expenseSortOptions: SortOption[] = [
 
 export default function Dashboard() {
   const { user, isLoading: authLoading } = useAuth();
+  const { registerServiceWorker } = usePWA();
   const {
     incomeStreams,
     expenses,
@@ -606,6 +609,11 @@ export default function Dashboard() {
       fetchUserData();
     }
   }, [user?.id, authLoading, fetchUserData]);
+
+  // Register service worker for PWA functionality
+  useEffect(() => {
+    registerServiceWorker();
+  }, [registerServiceWorker]);
 
   // Safe calculations with fallbacks to prevent NaN
   const safeMonthlyIncome = isNaN(monthlyIncome) ? 0 : monthlyIncome;
@@ -1753,7 +1761,6 @@ export default function Dashboard() {
                       placeholder: 'No expense data' 
                     })}
                     subtitle="Including all categories"
-                    trend={formatTrend(currentSnapshot?.expenseChangePercent ? -currentSnapshot.expenseChangePercent : null, "vs last month")}
                     badge={{
                       text: safeBurnRate < 50 ? "Controlled" : 
                             safeBurnRate > 0 ? "Monitor" : "Setup needed",
@@ -1768,7 +1775,6 @@ export default function Dashboard() {
                       placeholder: 'Complete setup' 
                     })}
                     subtitle={`${formatPercentage(safeSavingsRate)} savings rate`}
-                    trend={formatTrend(currentSnapshot?.savingsChangePercent ?? null, "vs last month")}
                     badge={{
                       text: safeSavingsRate > 20 ? "Excellent" : 
                             safeSavingsRate > 10 ? "Good" : 
@@ -2644,6 +2650,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 } 

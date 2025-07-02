@@ -92,6 +92,36 @@ interface RawData {
   }>;
 }
 
+interface PatchedIncomeEntry {
+  amount: number;
+  month: string;
+  category?: string;
+  incomeStream?: { type: string };
+  _date: Date;
+}
+
+interface PatchedExpenseEntry {
+  amount: number;
+  month: string;
+  category?: string;
+  expense?: { category: string };
+  _date: Date;
+}
+
+interface PatchedOneTimeIncomeEntry {
+  amount: number;
+  date: string;
+  category?: string;
+  _date: Date;
+}
+
+interface PatchedOneTimeExpenseEntry {
+  amount: number;
+  date: string;
+  category?: string;
+  _date: Date;
+}
+
 interface TooltipProps {
   active?: boolean;
   payload?: Array<{
@@ -179,9 +209,23 @@ export default function AnalyticsPage() {
   ) => {
     const monthlyData: { [key: string]: { income: number; expenses: number } } = {};
     
+    // Helper function to extract YYYY-MM format from any date string
+    const extractMonth = (dateString: string): string => {
+      if (!dateString) return new Date().toISOString().slice(0, 7);
+      
+      // Handle both full date strings and already formatted YYYY-MM strings
+      if (dateString.includes('T') || dateString.length > 7) {
+        // Full date string like "2024-01-01T00:00:00.000Z"
+        return dateString.slice(0, 7);
+      } else {
+        // Already in YYYY-MM format
+        return dateString;
+      }
+    };
+    
     // Process regular income entries
     incomeEntries.forEach(entry => {
-      const month = entry.month;
+      const month = extractMonth(entry.month);
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expenses: 0 };
       }
@@ -190,7 +234,7 @@ export default function AnalyticsPage() {
     
     // Process regular expense entries
     expenseEntries.forEach(entry => {
-      const month = entry.month;
+      const month = extractMonth(entry.month);
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expenses: 0 };
       }
@@ -199,7 +243,7 @@ export default function AnalyticsPage() {
     
     // Process one-time income
     oneTimeIncome.forEach(entry => {
-      const month = entry.date.slice(0, 7); // Extract YYYY-MM
+      const month = extractMonth(entry.date);
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expenses: 0 };
       }
@@ -208,7 +252,7 @@ export default function AnalyticsPage() {
     
     // Process one-time expenses
     oneTimeExpense.forEach(entry => {
-      const month = entry.date.slice(0, 7); // Extract YYYY-MM
+      const month = extractMonth(entry.date);
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expenses: 0 };
       }
@@ -217,13 +261,27 @@ export default function AnalyticsPage() {
     
     // Convert to array and sort by month
     return Object.entries(monthlyData)
-      .map(([month, data]) => ({
-        month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        income: data.income,
-        expenses: data.expenses,
-        net: data.income - data.expenses,
-        date: month
-      }))
+      .map(([month, data]) => {
+        // Ensure month is in YYYY-MM format before creating Date
+        const normalizedMonth = extractMonth(month);
+        const displayMonth = (() => {
+          try {
+            return new Date(normalizedMonth + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          } catch (error) {
+            console.warn('Invalid date format:', normalizedMonth, error);
+            return normalizedMonth; // Fallback to raw string
+          }
+        })();
+        
+        return {
+          month: displayMonth,
+          income: data.income,
+          expenses: data.expenses,
+          net: data.income - data.expenses,
+          date: normalizedMonth
+        };
+      })
+      .filter(item => item.date && item.date.match(/^\d{4}-\d{2}$/)) // Only include valid YYYY-MM dates
       .sort((a, b) => a.date.localeCompare(b.date));
   }, []);
 
@@ -251,7 +309,14 @@ export default function AnalyticsPage() {
     console.log('Expenses by category result:', expensesByCategory);
 
     // Monthly trends
+    console.log('=== PROCESSING MONTHLY TRENDS ===');
+    console.log('Sample income entries:', incomeEntries.slice(0, 2));
+    console.log('Sample expense entries:', expenseEntries.slice(0, 2));
+    console.log('Sample one-time income:', oneTimeIncome.slice(0, 2));
+    console.log('Sample one-time expense:', oneTimeExpense.slice(0, 2));
+    
     const monthlyTrends = processMonthlyTrends(incomeEntries, expenseEntries, oneTimeIncome, oneTimeExpense);
+    console.log('Monthly trends result:', monthlyTrends);
 
     // Top income streams
     const topIncomeStreams = incomeStreams
@@ -365,14 +430,32 @@ export default function AnalyticsPage() {
         parseResponse(oneTimeExpenseRes, 'One-time Expense')
       ]);
 
-      // Process data for analytics
+      // Patch: Ensure all entries have a valid JS Date object for their date
+      const patchedIncomeEntries = (incomeEntries || []).map((entry: RawData['incomeEntries'][0]): PatchedIncomeEntry => ({
+        ...entry,
+        _date: new Date(entry.month), // for recurring
+      }));
+      const patchedExpenseEntries = (expenseEntries || []).map((entry: RawData['expenseEntries'][0]): PatchedExpenseEntry => ({
+        ...entry,
+        _date: new Date(entry.month), // for recurring
+      }));
+      const patchedOneTimeIncome = (oneTimeIncome || []).map((entry: RawData['oneTimeIncome'][0]): PatchedOneTimeIncomeEntry => ({
+        ...entry,
+        _date: new Date(entry.date), // for one-time
+      }));
+      const patchedOneTimeExpense = (oneTimeExpense || []).map((entry: RawData['oneTimeExpense'][0]): PatchedOneTimeExpenseEntry => ({
+        ...entry,
+        _date: new Date(entry.date), // for one-time
+      }));
+
+      // Use patched entries in analytics
       const processedData = processAnalyticsData({
         incomeStreams,
         expenses,
-        incomeEntries,
-        expenseEntries,
-        oneTimeIncome,
-        oneTimeExpense
+        incomeEntries: patchedIncomeEntries,
+        expenseEntries: patchedExpenseEntries,
+        oneTimeIncome: patchedOneTimeIncome,
+        oneTimeExpense: patchedOneTimeExpense,
       });
 
       setAnalyticsData(processedData);
@@ -453,18 +536,18 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6 space-y-8">
+      <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Financial Analytics</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Financial Analytics</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1">
               Comprehensive insights into your financial performance and trends
             </p>
           </div>
           <div className="flex items-center space-x-3">
             <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full md:w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -478,94 +561,94 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Income</p>
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm text-gray-600">Total Income</p>
+                  <div className="text-lg md:text-2xl font-bold text-green-600 truncate">
                     {formatCurrency(safeAnalyticsData.totalIncome)}
                   </div>
                   <div className="flex items-center mt-2">
-                    <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
-                    <span className="text-sm text-green-600 font-medium">
+                    <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-green-600 mr-1 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-green-600 font-medium">
                       +{safeAnalyticsData.financialHealth.incomeGrowth}%
                     </span>
                   </div>
                 </div>
-                <div className="h-12 w-12 bg-green-50 rounded-full flex items-center justify-center">
-                  <Banknote className="h-6 w-6 text-green-600" />
+                <div className="h-10 w-10 md:h-12 md:w-12 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                  <Banknote className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Expenses</p>
-                  <div className="text-2xl font-bold text-red-600">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm text-gray-600">Total Expenses</p>
+                  <div className="text-lg md:text-2xl font-bold text-red-600 truncate">
                     {formatCurrency(safeAnalyticsData.totalExpenses)}
                   </div>
                   <div className="flex items-center mt-2">
-                    <ArrowUpRight className="h-4 w-4 text-red-600 mr-1" />
-                    <span className="text-sm text-red-600 font-medium">
+                    <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-red-600 mr-1 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-red-600 font-medium">
                       +{safeAnalyticsData.financialHealth.expenseGrowth}%
                     </span>
                   </div>
                 </div>
-                <div className="h-12 w-12 bg-red-50 rounded-full flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-red-600" />
+                <div className="h-10 w-10 md:h-12 md:w-12 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                  <CreditCard className="h-5 w-5 md:h-6 md:w-6 text-red-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Net Flow</p>
-                  <div className={`text-2xl font-bold ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm text-gray-600">Net Flow</p>
+                  <div className={`text-lg md:text-2xl font-bold truncate ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(safeAnalyticsData.netFlow)}
                   </div>
                   <div className="flex items-center mt-2">
                     {safeAnalyticsData.netFlow >= 0 ? (
-                      <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
+                      <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-green-600 mr-1 flex-shrink-0" />
                     ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-600 mr-1" />
+                      <ArrowDownRight className="h-3 w-3 md:h-4 md:w-4 text-red-600 mr-1 flex-shrink-0" />
                     )}
-                    <span className={`text-sm font-medium ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-xs md:text-sm font-medium ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {safeAnalyticsData.netFlow >= 0 ? 'Positive' : 'Negative'}
                     </span>
                   </div>
                 </div>
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${safeAnalyticsData.netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <Wallet className={`h-6 w-6 ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                <div className={`h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-2 ${safeAnalyticsData.netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <Wallet className={`h-5 w-5 md:h-6 md:w-6 ${safeAnalyticsData.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Savings Rate</p>
-                  <div className={`text-2xl font-bold ${safeAnalyticsData.financialHealth.savingsRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm text-gray-600">Savings Rate</p>
+                  <div className={`text-lg md:text-2xl font-bold truncate ${safeAnalyticsData.financialHealth.savingsRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {safeAnalyticsData.financialHealth.savingsRate.toFixed(1)}%
                   </div>
                   <div className="flex items-center mt-2">
-                    <Target className="h-4 w-4 text-blue-600 mr-1" />
-                    <span className="text-sm text-blue-600 font-medium">
+                    <Target className="h-3 w-3 md:h-4 md:w-4 text-blue-600 mr-1 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-blue-600 font-medium">
                       Target: 20%
                     </span>
                   </div>
                 </div>
-                <div className="h-12 w-12 bg-blue-50 rounded-full flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-blue-600" />
+                <div className="h-10 w-10 md:h-12 md:w-12 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                  <Activity className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -573,31 +656,31 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Charts Section */}
-        <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="trends" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-              <BarChart3 className="h-4 w-4 mr-2" />
+        <Tabs defaultValue="trends" className="space-y-4 md:space-y-6">
+          <TabsList className="bg-white border border-gray-200 w-full justify-start overflow-x-auto">
+            <TabsTrigger value="trends" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 text-sm md:text-base whitespace-nowrap">
+              <BarChart3 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Trends
             </TabsTrigger>
-            <TabsTrigger value="breakdown" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700">
-              <PieChartIcon className="h-4 w-4 mr-2" />
+            <TabsTrigger value="breakdown" className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 text-sm md:text-base whitespace-nowrap">
+              <PieChartIcon className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Breakdown
             </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-              <Activity className="h-4 w-4 mr-2" />
+            <TabsTrigger value="insights" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700 text-sm md:text-base whitespace-nowrap">
+              <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Insights
             </TabsTrigger>
           </TabsList>
 
           {/* Trends Tab */}
-          <TabsContent value="trends" className="space-y-6">
+          <TabsContent value="trends" className="space-y-4 md:space-y-6">
             {/* Income vs Expenses Trends */}
             <Card className="border-gray-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Income vs Expenses Trend</CardTitle>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Income vs Expenses Trend</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-80">
+              <CardContent className="p-4 md:p-6 pt-0">
+                <div className="h-64 md:h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={safeAnalyticsData.monthlyTrends}>
                       <defs>
@@ -614,11 +697,15 @@ export default function AnalyticsPage() {
                       <XAxis 
                         dataKey="month" 
                         stroke="#6b7280"
-                        fontSize={12}
+                        fontSize={10}
+                        interval="preserveStartEnd"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
                       />
                       <YAxis 
                         stroke="#6b7280"
-                        fontSize={12}
+                        fontSize={10}
                         tickFormatter={(value) => `RM${(value / 1000).toFixed(0)}k`}
                       />
                       <Tooltip content={<CustomTooltip />} />
@@ -646,22 +733,26 @@ export default function AnalyticsPage() {
 
             {/* Net Flow Chart */}
             <Card className="border-gray-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Net Cash Flow</CardTitle>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Net Cash Flow</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-64">
+              <CardContent className="p-4 md:p-6 pt-0">
+                <div className="h-48 md:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={safeAnalyticsData.monthlyTrends}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis 
                         dataKey="month" 
                         stroke="#6b7280"
-                        fontSize={12}
+                        fontSize={10}
+                        interval="preserveStartEnd"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
                       />
                       <YAxis 
                         stroke="#6b7280"
-                        fontSize={12}
+                        fontSize={10}
                         tickFormatter={(value) => `RM${(value / 1000).toFixed(0)}k`}
                       />
                       <Tooltip content={<CustomTooltip />} />
@@ -682,24 +773,24 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Breakdown Tab */}
-          <TabsContent value="breakdown" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+          <TabsContent value="breakdown" className="space-y-4 md:space-y-6">
+            <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
               {/* Income Breakdown */}
               <Card className="border-gray-200 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900">Income Breakdown</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Income Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6 pt-0">
                   <div className="space-y-4">
-                    <div className="h-64">
+                    <div className="h-48 md:h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={safeAnalyticsData.incomeByCategory}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius={40}
+                            outerRadius={80}
                             paddingAngle={2}
                             dataKey="value"
                           >
@@ -714,14 +805,14 @@ export default function AnalyticsPage() {
                     <div className="space-y-2">
                       {safeAnalyticsData.incomeByCategory.map((item, index) => (
                         <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <div 
-                              className="w-3 h-3 rounded-full" 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
                               style={{ backgroundColor: item.color }}
                             ></div>
-                            <span className="text-sm text-gray-700">{item.name}</span>
+                            <span className="text-xs md:text-sm text-gray-700 truncate">{item.name}</span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-xs md:text-sm font-medium text-gray-900 ml-2">
                             {formatCurrency(item.value)}
                           </span>
                         </div>
@@ -733,20 +824,20 @@ export default function AnalyticsPage() {
 
               {/* Expense Breakdown */}
               <Card className="border-gray-200 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900">Expense Breakdown</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Expense Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6 pt-0">
                   <div className="space-y-4">
-                    <div className="h-64">
+                    <div className="h-48 md:h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={safeAnalyticsData.expensesByCategory}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius={40}
+                            outerRadius={80}
                             paddingAngle={2}
                             dataKey="value"
                           >
@@ -761,14 +852,14 @@ export default function AnalyticsPage() {
                     <div className="space-y-2">
                       {safeAnalyticsData.expensesByCategory.map((item, index) => (
                         <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <div 
-                              className="w-3 h-3 rounded-full" 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
                               style={{ backgroundColor: item.color }}
                             ></div>
-                            <span className="text-sm text-gray-700">{item.name}</span>
+                            <span className="text-xs md:text-sm text-gray-700 truncate">{item.name}</span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-xs md:text-sm font-medium text-gray-900 ml-2">
                             {formatCurrency(item.value)}
                           </span>
                         </div>
@@ -781,23 +872,23 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Insights Tab */}
-          <TabsContent value="insights" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+          <TabsContent value="insights" className="space-y-4 md:space-y-6">
+            <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
               {/* Top Income Sources */}
               <Card className="border-gray-200 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900">Top Income Sources</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Top Income Sources</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-4 md:p-6 pt-0">
+                  <div className="space-y-3 md:space-y-4">
                     {safeAnalyticsData.topIncomeStreams.map((stream, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{stream.name}</h4>
-                          <p className="text-sm text-gray-600">{formatCategoryName(stream.type)}</p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 text-sm md:text-base truncate">{stream.name}</h4>
+                          <p className="text-xs md:text-sm text-gray-600">{formatCategoryName(stream.type)}</p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-green-600">
+                        <div className="text-right ml-2">
+                          <div className="text-sm md:text-lg font-semibold text-green-600">
                             {formatCurrency(stream.amount)}
                           </div>
                           <div className="text-xs text-gray-500">per month</div>
@@ -810,19 +901,19 @@ export default function AnalyticsPage() {
 
               {/* Top Expenses */}
               <Card className="border-gray-200 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900">Top Expenses</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Top Expenses</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-4 md:p-6 pt-0">
+                  <div className="space-y-3 md:space-y-4">
                     {safeAnalyticsData.topExpenses.map((expense, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{expense.name}</h4>
-                          <p className="text-sm text-gray-600">{formatCategoryName(expense.category)}</p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 text-sm md:text-base truncate">{expense.name}</h4>
+                          <p className="text-xs md:text-sm text-gray-600">{formatCategoryName(expense.category)}</p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-red-600">
+                        <div className="text-right ml-2">
+                          <div className="text-sm md:text-lg font-semibold text-red-600">
                             {formatCurrency(expense.amount)}
                           </div>
                           <div className="text-xs text-gray-500">per month</div>
@@ -836,16 +927,16 @@ export default function AnalyticsPage() {
 
             {/* Financial Health Score */}
             <Card className="border-gray-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Financial Health Overview</CardTitle>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Financial Health Overview</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <CardContent className="p-4 md:p-6 pt-0">
+                <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                    <div className="text-xl md:text-3xl font-bold text-blue-600 mb-2">
                       {safeAnalyticsData.financialHealth.savingsRate.toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">Savings Rate</div>
+                    <div className="text-xs md:text-sm text-gray-600">Savings Rate</div>
                     <div className="text-xs text-gray-500 mt-1">
                       {safeAnalyticsData.financialHealth.savingsRate >= 20 ? 'Excellent' : 
                        safeAnalyticsData.financialHealth.savingsRate >= 10 ? 'Good' : 'Needs Improvement'}
@@ -853,30 +944,30 @@ export default function AnalyticsPage() {
                   </div>
 
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-600 mb-2">
+                    <div className="text-xl md:text-3xl font-bold text-purple-600 mb-2">
                       {safeAnalyticsData.financialHealth.expenseRatio.toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">Expense Ratio</div>
+                    <div className="text-xs md:text-sm text-gray-600">Expense Ratio</div>
                     <div className="text-xs text-gray-500 mt-1">
                       {safeAnalyticsData.financialHealth.expenseRatio <= 80 ? 'Good' : 'High'}
                     </div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">
+                    <div className="text-xl md:text-3xl font-bold text-green-600 mb-2">
                       +{safeAnalyticsData.financialHealth.incomeGrowth.toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">Income Growth</div>
+                    <div className="text-xs md:text-sm text-gray-600">Income Growth</div>
                     <div className="text-xs text-gray-500 mt-1">
                       {safeAnalyticsData.financialHealth.incomeGrowth > 0 ? 'Positive' : 'Flat'}
                     </div>
                   </div>
 
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-orange-600 mb-2">
+                    <div className="text-xl md:text-3xl font-bold text-orange-600 mb-2">
                       +{safeAnalyticsData.financialHealth.expenseGrowth.toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">Expense Growth</div>
+                    <div className="text-xs md:text-sm text-gray-600">Expense Growth</div>
                     <div className="text-xs text-gray-500 mt-1">
                       {safeAnalyticsData.financialHealth.expenseGrowth < safeAnalyticsData.financialHealth.incomeGrowth ? 'Controlled' : 'Watch'}
                     </div>

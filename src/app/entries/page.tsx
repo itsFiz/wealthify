@@ -764,45 +764,47 @@ export default function EntriesPage() {
       {/* Loading Overlay for Data Refetching */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3">
-            <Loader className="h-6 w-6 animate-spin text-primary" />
-            <span className="text-lg font-medium text-gray-700">Updating data...</span>
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-xl flex items-center space-x-3">
+            <Loader className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-primary" />
+            <span className="text-sm sm:text-lg font-medium text-gray-700">Updating data...</span>
           </div>
         </div>
       )}
 
-      <div className="container mx-auto p-6 space-y-8">
+      <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Comprehensive Financial Entries</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Comprehensive Financial Entries</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               View all your financial activity - both recurring monthly entries and one-time transactions
             </p>
-            <div className="mt-2 text-xs text-gray-500 space-y-1">
+            <div className="mt-2 text-xs text-gray-500 space-y-1 hidden sm:block">
               <div>• <strong>Recurring entries:</strong> Monthly income streams and expenses (automated from Dashboard)</div>
               <div>• <strong>One-time entries:</strong> Specific date transactions like freelance payments, medical bills, etc.</div>
               <div>• <strong>Comprehensive view:</strong> Complete monthly breakdown for analysis and tracking</div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2">
               <Plus className="h-4 w-4 mr-2" />
-              Add One-Time Income
+              <span className="hidden sm:inline">Add One-Time Income</span>
+              <span className="sm:hidden">Add Income</span>
             </Button>
-            <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-2">
               <Plus className="h-4 w-4 mr-2" />
-              Add One-Time Expense
+              <span className="hidden sm:inline">Add One-Time Expense</span>
+              <span className="sm:hidden">Add Expense</span>
             </Button>
           </div>
         </div>
 
         {/* Filters */}
         <Card className="border-gray-200 bg-white">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="space-y-4">
               {/* Filter Type Selection */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700">Filter Options:</span>
@@ -812,7 +814,7 @@ export default function EntriesPage() {
                     size="sm"
                     variant={filterType === 'preset' ? 'default' : 'outline'}
                     onClick={() => setFilterType('preset')}
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-none"
                   >
                     Quick Filters
                   </Button>
@@ -820,7 +822,7 @@ export default function EntriesPage() {
                     size="sm"
                     variant={filterType === 'custom' ? 'default' : 'outline'}
                     onClick={() => setFilterType('custom')}
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-none"
                   >
                     Custom Range
                   </Button>
@@ -829,14 +831,15 @@ export default function EntriesPage() {
 
               {/* Preset Filters */}
               {filterType === 'preset' && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
                   <Button
                     size="sm"
                     variant={presetFilter === 'current-month' ? 'default' : 'outline'}
                     onClick={() => setPresetFilter('current-month')}
                     className="text-xs"
                   >
-                    Current Month
+                    <span className="hidden sm:inline">Current Month</span>
+                    <span className="sm:hidden">Current</span>
                   </Button>
                   <Button
                     size="sm"
@@ -844,7 +847,8 @@ export default function EntriesPage() {
                     onClick={() => setPresetFilter('last-3-months')}
                     className="text-xs"
                   >
-                    Last 3 Months
+                    <span className="hidden sm:inline">Last 3 Months</span>
+                    <span className="sm:hidden">3 Months</span>
                   </Button>
                   <Button
                     size="sm"
@@ -852,7 +856,8 @@ export default function EntriesPage() {
                     onClick={() => setPresetFilter('last-6-months')}
                     className="text-xs"
                   >
-                    Last 6 Months
+                    <span className="hidden sm:inline">Last 6 Months</span>
+                    <span className="sm:hidden">6 Months</span>
                   </Button>
                   <Button
                     size="sm"
@@ -860,13 +865,14 @@ export default function EntriesPage() {
                     onClick={() => setPresetFilter('last-year')}
                     className="text-xs"
                   >
-                    Last Year
+                    <span className="hidden sm:inline">Last Year</span>
+                    <span className="sm:hidden">1 Year</span>
                   </Button>
                   <Button
                     size="sm"
                     variant={presetFilter === 'all-time' ? 'default' : 'outline'}
                     onClick={() => setPresetFilter('all-time')}
-                    className="text-xs"
+                    className="text-xs col-span-2 sm:col-span-1"
                   >
                     All Time
                   </Button>
@@ -875,25 +881,25 @@ export default function EntriesPage() {
 
               {/* Custom Date Range */}
               {filterType === 'custom' && (
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="startDate" className="text-xs font-medium text-gray-600">From:</Label>
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                    <Label htmlFor="startDate" className="text-xs font-medium text-gray-600 whitespace-nowrap">From:</Label>
                     <Input
                       id="startDate"
                       type="date"
                       value={customStartDate}
                       onChange={(e) => setCustomStartDate(e.target.value)}
-                      className="w-40 text-xs"
+                      className="w-full sm:w-40 text-xs"
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="endDate" className="text-xs font-medium text-gray-600">To:</Label>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                    <Label htmlFor="endDate" className="text-xs font-medium text-gray-600 whitespace-nowrap">To:</Label>
                     <Input
                       id="endDate"
                       type="date"
                       value={customEndDate}
                       onChange={(e) => setCustomEndDate(e.target.value)}
-                      className="w-40 text-xs"
+                      className="w-full sm:w-40 text-xs"
                     />
                   </div>
                   <Button
@@ -903,7 +909,7 @@ export default function EntriesPage() {
                       setCustomStartDate('');
                       setCustomEndDate('');
                     }}
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                   >
                     Clear
                   </Button>
@@ -917,19 +923,21 @@ export default function EntriesPage() {
                   placeholder="Search entries by name or notes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64"
+                  className="flex-1 sm:w-64 text-sm"
                 />
               </div>
 
               {/* Active Filter Display */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <div className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
                   <span className="text-xs text-gray-500">Active Filter:</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {getFilterDisplayText()}
-                  </Badge>
-                  <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">{getFilterDescription()}</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {getFilterDisplayText()}
+                    </Badge>
+                    <span className="text-xs text-gray-400 hidden sm:inline">•</span>
+                    <span className="text-xs text-gray-500">{getFilterDescription()}</span>
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500">
                   {filteredIncomeEntries.length + filteredExpenseEntries.length} total entries
@@ -940,25 +948,28 @@ export default function EntriesPage() {
         </Card>
 
         {/* Summary Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600">
                     Total Income
-                    <span className="text-xs text-blue-600 font-medium ml-1">
+                    <span className="text-xs text-blue-600 font-medium ml-1 hidden sm:inline">
                       ({getFilterDisplayText()})
                     </span>
                   </p>
-                  <div className="text-2xl font-semibold text-green-600">
+                  <div className="text-xl sm:text-2xl font-semibold text-green-600 truncate">
                     {formatCurrency(totalIncome)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 mt-1 hidden sm:block">
                     {getFilterDescription()} • {filteredIncomeEntries.length} entries
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 sm:hidden">
+                    {filteredIncomeEntries.length} entries
+                  </div>
                 </div>
-                <div className="h-8 w-8 bg-green-50 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="h-4 w-4 text-green-600" />
                 </div>
               </div>
@@ -966,47 +977,53 @@ export default function EntriesPage() {
           </Card>
 
           <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600">
                     Total Expenses
-                    <span className="text-xs text-blue-600 font-medium ml-1">
+                    <span className="text-xs text-blue-600 font-medium ml-1 hidden sm:inline">
                       ({getFilterDisplayText()})
                     </span>
                   </p>
-                  <div className="text-2xl font-semibold text-red-600">
+                  <div className="text-xl sm:text-2xl font-semibold text-red-600 truncate">
                     {formatCurrency(totalExpenses)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 mt-1 hidden sm:block">
                     {getFilterDescription()} • {filteredExpenseEntries.length} entries
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 sm:hidden">
+                    {filteredExpenseEntries.length} entries
+                  </div>
                 </div>
-                <div className="h-8 w-8 bg-red-50 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0">
                   <TrendingDown className="h-4 w-4 text-red-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
+          <Card className="border-gray-200 bg-white sm:col-span-2 lg:col-span-1">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600">
                     Net Flow
-                    <span className="text-xs text-blue-600 font-medium ml-1">
+                    <span className="text-xs text-blue-600 font-medium ml-1 hidden sm:inline">
                       ({getFilterDisplayText()})
                     </span>
                   </p>
-                  <div className={`text-2xl font-semibold ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className={`text-xl sm:text-2xl font-semibold truncate ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(netFlow)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 mt-1 hidden sm:block">
                     {getFilterDescription()} net flow
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 sm:hidden">
+                    Net flow
+                  </div>
                 </div>
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${netFlow >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
                   <DollarSign className={`h-4 w-4 ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
               </div>
@@ -1015,85 +1032,87 @@ export default function EntriesPage() {
         </div>
 
         {/* Entries Tables */}
-        <Tabs defaultValue="income" className="space-y-6">
-          <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="income" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-              All Income Entries ({filteredIncomeEntries.length})
+        <Tabs defaultValue="income" className="space-y-4 sm:space-y-6">
+          <TabsList className="bg-white border border-gray-200 w-full sm:w-auto">
+            <TabsTrigger value="income" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700 flex-1 sm:flex-none text-xs sm:text-sm">
+              <span className="hidden sm:inline">All Income Entries ({filteredIncomeEntries.length})</span>
+              <span className="sm:hidden">Income ({filteredIncomeEntries.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="expenses" className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-              All Expenses ({filteredExpenseEntries.length})
+            <TabsTrigger value="expenses" className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700 flex-1 sm:flex-none text-xs sm:text-sm">
+              <span className="hidden sm:inline">All Expenses ({filteredExpenseEntries.length})</span>
+              <span className="sm:hidden">Expenses ({filteredExpenseEntries.length})</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="income" className="space-y-4">
             <Card className="border-gray-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-900">All Income Entries</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg font-medium text-gray-900">All Income Entries</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 {filteredIncomeEntries.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {filteredIncomeEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center">
-                            <TrendingUp className="h-5 w-5 text-green-600" />
+                      <div key={entry.id} className="flex items-start sm:items-center justify-between p-3 sm:p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
+                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
+                            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                           </div>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-gray-900">{entry.name}</h4>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                              <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{entry.name}</h4>
                               {entry.isOneTime ? (
-                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 w-fit">
                                   One-time
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 w-fit">
                                   Recurring
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs sm:text-sm text-gray-600">
                               {entry.isOneTime 
                                 ? new Date(entry.date).toLocaleDateString('en-MY', { 
-                                    day: 'numeric', month: 'long', year: 'numeric' 
+                                    day: 'numeric', month: 'short', year: 'numeric' 
                                   })
                                 : new Date(entry.date).toLocaleDateString('en-MY', { 
-                                    month: 'long', year: 'numeric' 
+                                    month: 'short', year: 'numeric' 
                                   })
                               }
                             </p>
                             {entry.notes && (
-                              <p className="text-xs text-gray-500 mt-1">{entry.notes}</p>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{entry.notes}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-green-600">
-                            {formatCurrency(entry.amount)}
-                          </div>
-                          <Badge variant="outline" className="text-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 flex-shrink-0">
+                          <div className="text-right">
+                            <div className="text-sm sm:text-lg font-semibold text-green-600">
+                              {formatCurrency(entry.amount)}
+                            </div>
+                            <Badge variant="outline" className="text-xs mt-1">
                               {entry.category || 'OTHER'}
-                          </Badge>
+                            </Badge>
                           </div>
-                          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center space-x-1 sm:space-x-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             {entry.isOneTime && (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleEditIncomeEntry(entry)}
-                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDeleteEntry(entry, 'income')}
-                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-50 hover:text-red-600"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
@@ -1101,13 +1120,13 @@ export default function EntriesPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No income entries found</h3>
-                    <p className="text-gray-600 mb-4">
+                  <div className="text-center py-6 sm:py-8">
+                    <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No income entries found</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 px-4">
                       No recurring or one-time income entries match your current filters
                     </p>
-                    <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white">
+                    <Button onClick={() => setShowIncomeForm(true)} className="bg-green-600 hover:bg-green-700 text-white text-sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Add One-Time Income
                     </Button>
@@ -1119,73 +1138,73 @@ export default function EntriesPage() {
 
           <TabsContent value="expenses" className="space-y-4">
             <Card className="border-gray-200 bg-white">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-900">All Expense Entries</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg font-medium text-gray-900">All Expense Entries</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 {filteredExpenseEntries.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {filteredExpenseEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center">
-                            <TrendingDown className="h-5 w-5 text-red-600" />
+                      <div key={entry.id} className="flex items-start sm:items-center justify-between p-3 sm:p-4 border border-gray-100 rounded-lg hover:bg-gray-50 group">
+                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0">
+                            <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                           </div>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-gray-900">{entry.name}</h4>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                              <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{entry.name}</h4>
                               {entry.isOneTime ? (
-                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 w-fit">
                                   One-time
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 w-fit">
                                   Recurring
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs sm:text-sm text-gray-600">
                               {entry.isOneTime 
                                 ? new Date(entry.date).toLocaleDateString('en-MY', { 
-                                    day: 'numeric', month: 'long', year: 'numeric' 
+                                    day: 'numeric', month: 'short', year: 'numeric' 
                                   })
                                 : new Date(entry.date).toLocaleDateString('en-MY', { 
-                                    month: 'long', year: 'numeric' 
+                                    month: 'short', year: 'numeric' 
                                   })
                               }
                             </p>
                             {entry.notes && (
-                              <p className="text-xs text-gray-500 mt-1">{entry.notes}</p>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{entry.notes}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-red-600">
-                            {formatCurrency(entry.amount)}
-                          </div>
-                          <Badge variant="outline" className="text-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 flex-shrink-0">
+                          <div className="text-right">
+                            <div className="text-sm sm:text-lg font-semibold text-red-600">
+                              {formatCurrency(entry.amount)}
+                            </div>
+                            <Badge variant="outline" className="text-xs mt-1">
                               {entry.category || 'OTHER'}
-                          </Badge>
+                            </Badge>
                           </div>
-                          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center space-x-1 sm:space-x-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             {entry.isOneTime && (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleEditExpenseEntry(entry)}
-                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDeleteEntry(entry, 'expense')}
-                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-50 hover:text-red-600"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
@@ -1193,13 +1212,13 @@ export default function EntriesPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <TrendingDown className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No expense entries found</h3>
-                    <p className="text-gray-600 mb-4">
+                  <div className="text-center py-6 sm:py-8">
+                    <TrendingDown className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No expense entries found</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 px-4">
                       No recurring or one-time expense entries match your current filters
                     </p>
-                    <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white">
+                    <Button onClick={() => setShowExpenseForm(true)} className="bg-red-600 hover:bg-red-700 text-white text-sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Add One-Time Expense
                     </Button>
@@ -1213,21 +1232,21 @@ export default function EntriesPage() {
         {/* Income Form Modal */}
         {showIncomeForm && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
-              <div className="p-6 border-b border-gray-200/50">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b border-gray-200/50">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-green-500/10 rounded-lg">
-                    <Plus className="h-6 w-6 text-green-600" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
                 <div>
-                    <h3 className="text-xl font-bold gradient-text">Add One-Time Income</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Record a specific income transaction</p>
+                    <h3 className="text-lg sm:text-xl font-bold gradient-text">Add One-Time Income</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">Record a specific income transaction</p>
                   </div>
                 </div>
                 </div>
 
-              <div className="p-6">
-                <form onSubmit={handleCreateIncomeEntry} className="space-y-6">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleCreateIncomeEntry} className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-semibold text-foreground">Income Name</Label>
                     <div className="relative">
@@ -1236,8 +1255,8 @@ export default function EntriesPage() {
                         id="name"
                         value={incomeFormData.name}
                         onChange={(e) => setIncomeFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="e.g., Freelance Project, Affiliate Commission"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        placeholder="e.g., Freelance Project"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1255,7 +1274,7 @@ export default function EntriesPage() {
                     value={incomeFormData.amount}
                     onChange={(e) => setIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                     required
                   />
                     </div>
@@ -1270,7 +1289,7 @@ export default function EntriesPage() {
                         type="date"
                         value={incomeFormData.date}
                         onChange={(e) => setIncomeFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                     required
                   />
                     </div>
@@ -1281,7 +1300,7 @@ export default function EntriesPage() {
                     <Select value={incomeFormData.category} onValueChange={(value) => 
                       setIncomeFormData(prev => ({ ...prev, category: value }))
                     }>
-                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
@@ -1334,34 +1353,36 @@ export default function EntriesPage() {
                     value={incomeFormData.notes}
                     onChange={(e) => setIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                   />
                     </div>
                 </div>
 
-                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                  <div className="flex space-x-3 pt-4 sm:pt-6 border-t border-gray-200/50">
                     <Button 
                       type="button" 
                       variant="ghost" 
                       onClick={() => setShowIncomeForm(false)}
-                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60 text-sm"
                     >
                     Cancel
                   </Button>
                     <Button 
                       type="submit" 
                       disabled={isSubmittingIncome}
-                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                     >
                       {isSubmittingIncome ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Adding...
+                          <span className="hidden sm:inline">Adding...</span>
+                          <span className="sm:hidden">Adding</span>
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Income
+                          <span className="hidden sm:inline">Add Income</span>
+                          <span className="sm:hidden">Add</span>
                         </>
                       )}
                   </Button>
@@ -1375,21 +1396,21 @@ export default function EntriesPage() {
         {/* Expense Form Modal */}
         {showExpenseForm && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
-              <div className="p-6 border-b border-gray-200/50">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b border-gray-200/50">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-red-500/10 rounded-lg">
-                    <Plus className="h-6 w-6 text-red-600" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                   </div>
                 <div>
-                    <h3 className="text-xl font-bold gradient-text">Add One-Time Expense</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Record a specific expense transaction</p>
+                    <h3 className="text-lg sm:text-xl font-bold gradient-text">Add One-Time Expense</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">Record a specific expense transaction</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6">
-                <form onSubmit={handleCreateExpenseEntry} className="space-y-6">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleCreateExpenseEntry} className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-semibold text-foreground">Expense Name</Label>
                     <div className="relative">
@@ -1399,7 +1420,7 @@ export default function EntriesPage() {
                         value={expenseFormData.name}
                         onChange={(e) => setExpenseFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="e.g., Medical Bill, Car Repair"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1417,7 +1438,7 @@ export default function EntriesPage() {
                         value={expenseFormData.amount}
                         onChange={(e) => setExpenseFormData(prev => ({ ...prev, amount: e.target.value }))}
                         placeholder="0.00"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1432,7 +1453,7 @@ export default function EntriesPage() {
                         type="date"
                         value={expenseFormData.date}
                         onChange={(e) => setExpenseFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1443,7 +1464,7 @@ export default function EntriesPage() {
                     <Select value={expenseFormData.category} onValueChange={(value) => 
                       setExpenseFormData(prev => ({ ...prev, category: value }))
                     }>
-                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm">
                         <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                       <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
@@ -1514,34 +1535,36 @@ export default function EntriesPage() {
                         value={expenseFormData.notes}
                         onChange={(e) => setExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                  <div className="flex space-x-3 pt-4 sm:pt-6 border-t border-gray-200/50">
                     <Button 
                       type="button" 
                       variant="ghost" 
                       onClick={() => setShowExpenseForm(false)}
-                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60 text-sm"
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit" 
                       disabled={isSubmittingExpense}
-                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                     >
                       {isSubmittingExpense ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Adding...
+                          <span className="hidden sm:inline">Adding...</span>
+                          <span className="sm:hidden">Adding</span>
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Expense
+                          <span className="hidden sm:inline">Add Expense</span>
+                          <span className="sm:hidden">Add</span>
                         </>
                       )}
                     </Button>
@@ -1555,21 +1578,21 @@ export default function EntriesPage() {
         {/* Edit Income Form Modal */}
         {showEditIncomeForm && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
-              <div className="p-6 border-b border-gray-200/50">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b border-gray-200/50">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-green-500/10 rounded-lg">
-                    <Plus className="h-6 w-6 text-green-600" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
                 <div>
-                    <h3 className="text-xl font-bold gradient-text">Edit One-Time Income</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Update a specific income transaction</p>
+                    <h3 className="text-lg sm:text-xl font-bold gradient-text">Edit One-Time Income</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">Update a specific income transaction</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6">
-                <form onSubmit={handleUpdateIncomeEntry} className="space-y-6">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleUpdateIncomeEntry} className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-semibold text-foreground">Income Name</Label>
                     <div className="relative">
@@ -1579,7 +1602,7 @@ export default function EntriesPage() {
                         value={editIncomeFormData.name}
                         onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="e.g., Freelance Project, Affiliate Commission"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1597,7 +1620,7 @@ export default function EntriesPage() {
                         value={editIncomeFormData.amount}
                         onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                     required
                   />
                     </div>
@@ -1612,7 +1635,7 @@ export default function EntriesPage() {
                         type="date"
                         value={editIncomeFormData.date}
                         onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                     required
                   />
                     </div>
@@ -1623,7 +1646,7 @@ export default function EntriesPage() {
                     <Select value={editIncomeFormData.category} onValueChange={(value) => 
                       setEditIncomeFormData(prev => ({ ...prev, category: value }))
                     }>
-                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
@@ -1676,34 +1699,36 @@ export default function EntriesPage() {
                         value={editIncomeFormData.notes}
                         onChange={(e) => setEditIncomeFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                  <div className="flex space-x-3 pt-4 sm:pt-6 border-t border-gray-200/50">
                     <Button 
                       type="button" 
                       variant="ghost" 
                       onClick={() => setShowEditIncomeForm(false)}
-                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60 text-sm"
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit" 
                       disabled={isUpdatingIncome}
-                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                     >
                       {isUpdatingIncome ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Updating...
+                          <span className="hidden sm:inline">Updating...</span>
+                          <span className="sm:hidden">Updating</span>
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Update Income
+                          <span className="hidden sm:inline">Update Income</span>
+                          <span className="sm:hidden">Update</span>
                         </>
                       )}
                     </Button>
@@ -1717,21 +1742,21 @@ export default function EntriesPage() {
         {/* Edit Expense Form Modal */}
         {showEditExpenseForm && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
-              <div className="p-6 border-b border-gray-200/50">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b border-gray-200/50">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-red-500/10 rounded-lg">
-                    <Plus className="h-6 w-6 text-red-600" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                   </div>
                 <div>
-                    <h3 className="text-xl font-bold gradient-text">Edit One-Time Expense</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Update a specific expense transaction</p>
+                    <h3 className="text-lg sm:text-xl font-bold gradient-text">Edit One-Time Expense</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">Update a specific expense transaction</p>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6">
-                <form onSubmit={handleUpdateExpenseEntry} className="space-y-6">
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleUpdateExpenseEntry} className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-semibold text-foreground">Expense Name</Label>
                     <div className="relative">
@@ -1741,7 +1766,7 @@ export default function EntriesPage() {
                         value={editExpenseFormData.name}
                         onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="e.g., Medical Bill, Car Repair"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1759,7 +1784,7 @@ export default function EntriesPage() {
                         value={editExpenseFormData.amount}
                         onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, amount: e.target.value }))}
                         placeholder="0.00"
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1774,7 +1799,7 @@ export default function EntriesPage() {
                         type="date"
                         value={editExpenseFormData.date}
                         onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                         required
                       />
                     </div>
@@ -1785,7 +1810,7 @@ export default function EntriesPage() {
                     <Select value={editExpenseFormData.category} onValueChange={(value) => 
                       setEditExpenseFormData(prev => ({ ...prev, category: value }))
                     }>
-                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all">
+                      <SelectTrigger className="bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent className="z-[300] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
@@ -1856,34 +1881,36 @@ export default function EntriesPage() {
                         value={editExpenseFormData.notes}
                         onChange={(e) => setEditExpenseFormData(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Additional details..."
-                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all"
+                        className="pl-10 bg-gray-50/80 border-gray-200/60 backdrop-blur-sm focus:bg-white/90 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/20 transition-all text-sm"
                       />
                     </div>
                 </div>
 
-                  <div className="flex space-x-3 pt-6 border-t border-gray-200/50">
+                  <div className="flex space-x-3 pt-4 sm:pt-6 border-t border-gray-200/50">
                     <Button 
                       type="button" 
                       variant="ghost" 
                       onClick={() => setShowEditExpenseForm(false)}
-                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60 text-sm"
                     >
                     Cancel
                   </Button>
                     <Button 
                       type="submit" 
                       disabled={isUpdatingExpense}
-                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                     >
                       {isUpdatingExpense ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Updating...
+                          <span className="hidden sm:inline">Updating...</span>
+                          <span className="sm:hidden">Updating</span>
                         </>
                       ) : (
                         <>
                           <Plus className="h-4 w-4 mr-2" />
-                          Update Expense
+                          <span className="hidden sm:inline">Update Expense</span>
+                          <span className="sm:hidden">Update</span>
                         </>
                       )}
                   </Button>
@@ -1897,8 +1924,8 @@ export default function EntriesPage() {
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && deletingEntry && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card">
-              <div className="p-6 border-b border-gray-200/50">
+            <div className="w-full max-w-md mx-auto bg-white/98 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl metric-card max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b border-gray-200/50">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-red-500/10 rounded-lg">
                     <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -1910,7 +1937,7 @@ export default function EntriesPage() {
                 </div>
               </div>
               
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="space-y-4">
                   <div className="p-4 bg-red-50/80 rounded-lg border border-red-200/60">
                     {(() => {
@@ -1944,7 +1971,7 @@ export default function EntriesPage() {
                         setShowDeleteConfirm(false);
                         setDeletingEntry(null);
                       }}
-                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60"
+                      className="flex-1 bg-gray-100/70 hover:bg-gray-200/70 backdrop-blur-sm border border-gray-200/60 text-sm"
                     >
                       <X className="h-4 w-4 mr-2" />
                       Cancel
@@ -1952,17 +1979,19 @@ export default function EntriesPage() {
                     <Button 
                       onClick={confirmDelete}
                       disabled={isDeleting}
-                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-700 hover:via-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:shadow-red-600/30 transform hover:scale-[1.02] transition-all duration-200 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm"
                     >
                       {isDeleting ? (
                         <>
                           <Loader className="h-4 w-4 mr-2 animate-spin" />
-                          Deleting...
+                          <span className="hidden sm:inline">Deleting...</span>
+                          <span className="sm:hidden">Deleting</span>
                         </>
                       ) : (
                         <>
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Entry
+                          <span className="hidden sm:inline">Delete Entry</span>
+                          <span className="sm:hidden">Delete</span>
                         </>
                       )}
                     </Button>
