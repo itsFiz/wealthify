@@ -7,10 +7,10 @@ import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   LayoutDashboard,
-
-    //Target,
+  //Target,
   Calculator,
   FileText,
   //Settings,
@@ -264,34 +264,14 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="border-t border-white/10 p-3">
-        {/* <div className="space-y-1">
-          {bottomItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link key={item.name} href={item.href}>
-                <div
-                  className={cn(
-                    'group flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                    isActive
-                      ? 'bg-gradient-to-r from-primary/20 to-cyan-500/10 text-primary shadow-lg shadow-primary/20 border border-primary/30'
-                      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
-                  )}
-                >
-                  <item.icon
-                    className={cn(
-                      'h-4 w-4 transition-colors',
-                      isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
-                    )}
-                  />
-                  <span>{item.name}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div> */}
+        {/* Theme Toggle */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-medium text-muted-foreground">Theme</span>
+          <ThemeToggle />
+        </div>
         
         {/* Logout Button */}
-        <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="pt-3 border-t border-white/10">
           <Button
             variant="ghost"
             className="w-full justify-start text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
