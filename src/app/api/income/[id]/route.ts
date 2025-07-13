@@ -102,8 +102,8 @@ export async function PUT(
     console.log('✅ Validated income stream data:', validatedData);
 
     // Prepare update data with proper date conversion
-    const { earnedDate: earnedDateString, ...restValidatedData } = validatedData;
-    const updateData: typeof restValidatedData & { earnedDate?: Date } = {
+    const { earnedDate: earnedDateString, endDate: endDateString, ...restValidatedData } = validatedData;
+    const updateData: typeof restValidatedData & { earnedDate?: Date; endDate?: Date } = {
       ...restValidatedData,
     };
 
@@ -111,6 +111,12 @@ export async function PUT(
     if (earnedDateString) {
       updateData.earnedDate = new Date(earnedDateString);
       console.log('📅 Converted earnedDate from string to Date:', updateData.earnedDate);
+    }
+
+    // Convert endDate string to Date object if provided
+    if (endDateString) {
+      updateData.endDate = new Date(endDateString);
+      console.log('📅 Converted endDate from string to Date:', updateData.endDate);
     }
 
     console.log('🔄 Final update data:', updateData);
@@ -128,10 +134,14 @@ export async function PUT(
 
     console.log('✅ Successfully updated income stream:', updatedStream.id);
 
-    // Check if earnedDate or amount changed and regenerate entries
+    // Check if earnedDate, endDate, or amount changed and handle entry updates
     const oldEarnedDate = existingStream.earnedDate ? new Date(existingStream.earnedDate) : null;
     const newEarnedDate = validatedData.earnedDate ? new Date(validatedData.earnedDate) : null;
     const earnedDateChanged = (oldEarnedDate?.getTime() !== newEarnedDate?.getTime());
+    
+    const oldEndDate = existingStream.endDate ? new Date(existingStream.endDate) : null;
+    const newEndDate = validatedData.endDate ? new Date(validatedData.endDate) : null;
+    const endDateChanged = (oldEndDate?.getTime() !== newEndDate?.getTime());
     
     const oldAmount = Number(existingStream.actualMonthly || existingStream.expectedMonthly);
     const newAmount = Number(
@@ -140,22 +150,50 @@ export async function PUT(
     );
     const amountChanged = (newAmount !== oldAmount);
 
-    if (earnedDateChanged || amountChanged) {
+    if (earnedDateChanged) {
+      // If earned date changed, we need to regenerate all entries
+      console.log('🔄 Earned date changed - regenerating all entries');
+      const deleteResult = await deleteIncomeStreamEntries(id);
+      console.log(`🗑️ ${deleteResult.message}`);
+      
+      const generateResult = await generateIncomeEntries(id);
+      console.log(`✅ ${generateResult.message}`);
+    } else if (endDateChanged) {
+      // If only end date changed, only delete future entries after the end date
+      console.log('🔄 End date changed - removing future entries only');
+      const endDate = validatedData.endDate ? new Date(validatedData.endDate) : null;
+      
+      if (endDate) {
+        // Delete entries after the end date (keep the end date month, delete from next month onwards)
+        const nextMonthAfterEnd = new Date(endDate);
+        nextMonthAfterEnd.setMonth(nextMonthAfterEnd.getMonth() + 1);
+        nextMonthAfterEnd.setDate(1); // Start of next month
+        
+        const deletedEntries = await prisma.incomeEntry.deleteMany({
+          where: {
+            incomeStreamId: id,
+            month: {
+              gte: nextMonthAfterEnd,
+            },
+          },
+        });
+        console.log(`🗑️ Deleted ${deletedEntries.count} entries from ${nextMonthAfterEnd.toLocaleDateString()} onwards`);
+      }
+    } else if (amountChanged) {
+      // If only amount changed, update existing entries
+      console.log('🔄 Amount changed - updating existing entries');
       try {
-        console.log('🔄 Regenerating entries due to changes:');
-        console.log(`   - Earned date changed: ${earnedDateChanged} (${oldEarnedDate?.toLocaleDateString() || 'null'} → ${newEarnedDate?.toLocaleDateString() || 'null'})`);
-        console.log(`   - Amount changed: ${amountChanged} (RM${oldAmount} → RM${newAmount})`);
-        
-        // Delete existing entries and regenerate from the new date
-        const deleteResult = await deleteIncomeStreamEntries(id);
-        console.log(`🗑️ ${deleteResult.message}`);
-        
-        // Regenerate entries with new date/amount
-        const generateResult = await generateIncomeEntries(id);
-        console.log(`✅ ${generateResult.message}`);
+        const updateResult = await prisma.incomeEntry.updateMany({
+          where: {
+            incomeStreamId: id,
+          },
+          data: {
+            amount: newAmount,
+          },
+        });
+        console.log(`✅ Updated ${updateResult.count} entries with new amount`);
       } catch (entryError) {
-        console.error('❌ Failed to regenerate income entries:', entryError);
-        // Don't fail the entire request if entry regeneration fails
+        console.error('❌ Failed to update income entries:', entryError);
       }
     }
 

@@ -163,6 +163,8 @@ export default function SimulatorPage() {
             expectedMonthly: Number(income.expectedMonthly),
             actualMonthly: income.actualMonthly ? Number(income.actualMonthly) : undefined,
           })));
+        } else {
+          toast.error('Failed to load income data');
         }
 
         if (expensesRes.ok) {
@@ -171,6 +173,8 @@ export default function SimulatorPage() {
             ...expense,
             amount: Number(expense.amount),
           })));
+        } else {
+          toast.error('Failed to load expenses data');
         }
 
         if (goalsRes.ok) {
@@ -181,11 +185,15 @@ export default function SimulatorPage() {
             currentAmount: Number(goal.currentAmount),
             targetDate: new Date(goal.targetDate as string),
           })));
+        } else {
+          toast.error('Failed to load goals data');
         }
 
         if (balanceRes.ok) {
           const balanceData = await balanceRes.json();
           setStartingBalance(Number(balanceData.startingBalance) || 0);
+        } else {
+          toast.error('Failed to load balance data');
         }
 
         if (plansRes.ok) {
@@ -195,10 +203,16 @@ export default function SimulatorPage() {
             createdAt: new Date(plan.createdAt as string),
             updatedAt: new Date(plan.updatedAt as string),
           })));
+        } else {
+          toast.error('Failed to load purchase plans data');
         }
+
+        // Show success message if all data loaded successfully
+        toast.success('Financial data loaded successfully');
 
       } catch (error) {
         console.error('Error fetching financial data:', error);
+        toast.error('Failed to load financial data. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -213,7 +227,8 @@ export default function SimulatorPage() {
       const balanceCalculation = calculateAccumulatedBalance(
         startingBalance,
         incomeStreams,
-        expenses
+        expenses,
+        [] // No goal contributions in simulator for now
       );
       setCurrentBalance(balanceCalculation.currentCalculatedBalance);
     } else {
@@ -223,7 +238,10 @@ export default function SimulatorPage() {
 
   // Save purchase plan
   const savePurchasePlan = async () => {
-    if (!planName.trim()) return;
+    if (!planName.trim()) {
+      toast.error('Please enter a plan name');
+      return;
+    }
     
     setSavingPlan(true);
     try {
@@ -277,11 +295,12 @@ export default function SimulatorPage() {
       appreciationRate: plan.appreciationRate || 0,
     });
     setSelectedScenario(null); // Reset scenario selection when loading a plan
-    toast.success(`Loaded "${plan.name}" plan`);
+    toast.success(`Loaded "${plan.name}" plan with ${formatCurrency(plan.targetAmount)} target`);
   };
 
   // Handle scenario selection
   const handleScenarioSelection = (scenarioId: string | null) => {
+    const wasSelected = selectedScenario !== null;
     setSelectedScenario(scenarioId);
     
     // If selecting a scenario, update the desired timeline to match the scenario's actual timeline
@@ -294,6 +313,9 @@ export default function SimulatorPage() {
         }));
         toast.success(`Timeline updated to ${selectedScenarioData.timelineMonths} months to match selected scenario`);
       }
+    } else if (wasSelected) {
+      // User deselected a scenario
+      toast('Scenario selection cleared');
     }
   };
 
@@ -389,6 +411,13 @@ export default function SimulatorPage() {
     });
   }, [financialMetrics, inputs, scenarioSortOrder]);
 
+  // Show toast for no scenarios
+  useEffect(() => {
+    if (!loading && scenarios.length === 0 && financialMetrics.monthlyIncome > 0) {
+      toast.error('No feasible scenarios found. Consider increasing income or reducing target amount.');
+    }
+  }, [scenarios.length, financialMetrics.monthlyIncome, loading]);
+
   // Handle input changes
   const updateInput = (field: keyof SimulationInputs, value: number | string) => {
     setInputs(prev => {
@@ -399,6 +428,9 @@ export default function SimulatorPage() {
         const purchaseType = PURCHASE_TYPES[value as keyof typeof PURCHASE_TYPES];
         newInputs.targetAmount = purchaseType.defaultAmount;
         newInputs.appreciationRate = purchaseType.defaultAppreciationRate || 0;
+        
+        // Show toast notification for purchase type change
+        toast.success(`Switched to ${purchaseType.label} planning`);
       }
       
       return newInputs;
@@ -737,8 +769,15 @@ export default function SimulatorPage() {
                             )}
 
                             {/* Save Plan Button */}
-              <Button 
-                onClick={() => setShowSaveModal(true)}
+                            <Button
+                onClick={() => {
+                  if (inputs.targetAmount <= 0) {
+                    toast.error('Please enter a valid target amount');
+                    return;
+                  }
+                  setShowSaveModal(true);
+                  toast.success('Opening save plan modal');
+                }}
                 className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 disabled={inputs.targetAmount <= 0}
               >
@@ -777,6 +816,7 @@ export default function SimulatorPage() {
                   <p className="text-muted-foreground mb-4">
                     Your current income may be too low for this goal. Consider:
                   </p>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <TrendingUp className="h-5 w-5 mx-auto mb-2 text-green-600" />
@@ -945,7 +985,11 @@ export default function SimulatorPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setScenarioSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                        onClick={() => {
+                          const newOrder = scenarioSortOrder === 'desc' ? 'asc' : 'desc';
+                          setScenarioSortOrder(newOrder);
+                          toast.success(`Scenarios sorted by ${newOrder === 'desc' ? 'highest' : 'lowest'} savings rate first`);
+                        }}
                         className="text-xs"
                       >
                         <TrendingUp className="h-3 w-3 mr-1" />
@@ -1130,7 +1174,13 @@ export default function SimulatorPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => deletePurchasePlan(plan.id)}
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete "${plan.name}"?`)) {
+                              deletePurchasePlan(plan.id);
+                            } else {
+                              toast('Delete cancelled');
+                            }
+                          }}
                           className="text-xs text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -1434,6 +1484,7 @@ export default function SimulatorPage() {
                 onClick={() => {
                   setShowSaveModal(false);
                   setPlanName('');
+                  toast('Save plan cancelled');
                 }}
                 className="flex-1"
               >

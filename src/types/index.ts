@@ -71,6 +71,7 @@ export interface IncomeStream {
   actualMonthly?: number;
   frequency: Frequency;
   earnedDate?: Date;
+  endDate?: Date; // Date when income stream was ended
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -95,6 +96,7 @@ export interface Expense {
   amount: number;
   frequency: Frequency;
   incurredDate?: Date; // Date when expense was incurred/paid
+  endDate?: Date; // Date when expense was ended
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

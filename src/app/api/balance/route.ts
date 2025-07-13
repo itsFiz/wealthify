@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import type { IncomeType, Frequency, ExpenseCategory, ExpenseType } from '@/types';
 
 const updateStartingBalanceSchema = z.object({
   startingBalance: z.number().min(0, 'Starting balance cannot be negative'),
@@ -32,12 +33,72 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Calculate the actual balance based on income/expenses/goal contributions
+    const userIncomeStreams = await prisma.incomeStream.findMany({
+      where: { userId: user.id, isActive: true },
+    });
+
+    const userExpenses = await prisma.expense.findMany({
+      where: { userId: user.id, isActive: true },
+    });
+
+    const userGoalContributions = await prisma.goalContribution.findMany({
+      where: { goal: { userId: user.id } },
+      include: { goal: true },
+    });
+
+    // Convert to the format expected by calculateAccumulatedBalance
+    const incomeStreamsForCalculation = userIncomeStreams.map(stream => ({
+      ...stream,
+      expectedMonthly: Number(stream.expectedMonthly),
+      actualMonthly: stream.actualMonthly ? Number(stream.actualMonthly) : Number(stream.expectedMonthly),
+      earnedDate: stream.earnedDate || undefined,
+      endDate: stream.endDate || undefined, // Convert null to undefined
+      createdAt: stream.createdAt,
+      isActive: stream.isActive,
+      type: stream.type as IncomeType,
+      frequency: stream.frequency as Frequency,
+    }));
+
+    const expensesForCalculation = userExpenses.map(expense => ({
+      ...expense,
+      amount: Number(expense.amount),
+      incurredDate: expense.incurredDate || undefined,
+      endDate: expense.endDate || undefined, // Convert null to undefined
+      createdAt: expense.createdAt,
+      isActive: expense.isActive,
+      category: expense.category as ExpenseCategory,
+      type: expense.type as ExpenseType,
+      frequency: expense.frequency as Frequency,
+    }));
+
+    const goalContributionsForCalculation = userGoalContributions.map(contrib => ({
+      amount: Number(contrib.amount),
+      month: contrib.month,
+    }));
+
+    // Import the calculation function
+    const { calculateAccumulatedBalance } = await import('@/lib/calculations/index');
+    
+    const startingBalance = Number(user.startingBalance || 0);
+    const balanceCalculation = calculateAccumulatedBalance(
+      startingBalance,
+      incomeStreamsForCalculation,
+      expensesForCalculation,
+      goalContributionsForCalculation
+    );
+
+    const calculatedBalance = balanceCalculation.currentCalculatedBalance;
+    const databaseBalance = user.currentBalance ? Number(user.currentBalance) : 0;
+
     // Handle cases where user doesn't have balance fields yet (existing users)
     // Convert Decimal fields to numbers for JSON serialization with fallbacks
     const response = {
-      currentBalance: user.currentBalance ? Number(user.currentBalance) : 0,
-      startingBalance: user.startingBalance ? Number(user.startingBalance) : 0,
+      currentBalance: calculatedBalance, // Use calculated balance instead of database balance
+      startingBalance: startingBalance,
       balanceUpdatedAt: user.balanceUpdatedAt || null,
+      databaseBalance: databaseBalance, // Include for debugging
+      calculatedBalance: calculatedBalance, // Include for debugging
       recentEntries: user.balanceEntries ? user.balanceEntries.map(entry => ({
         ...entry,
         amount: Number(entry.amount),

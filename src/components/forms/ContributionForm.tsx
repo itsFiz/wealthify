@@ -20,12 +20,13 @@ interface ContributionFormData {
 
 interface ContributionFormProps {
   goal: Goal;
+  currentBalance?: number;
   onSubmit: (data: ContributionFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = false }: ContributionFormProps) {
+export function ContributionForm({ goal, currentBalance, onSubmit, onCancel, isSubmitting = false }: ContributionFormProps) {
   const [formData, setFormData] = useState<ContributionFormData>({
     amount: 0,
     month: new Date(),
@@ -47,6 +48,11 @@ export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = fals
 
     if (formData.notes && formData.notes.length > 500) {
       newErrors.notes = 'Notes are too long (max 500 characters)';
+    }
+
+    // Check if user has sufficient balance
+    if (currentBalance !== undefined && formData.amount > currentBalance) {
+      newErrors.amount = `Insufficient balance. You have RM${currentBalance.toLocaleString()} available.`;
     }
 
     setErrors(newErrors);
@@ -191,6 +197,26 @@ export function ContributionForm({ goal, onSubmit, onCancel, isSubmitting = fals
                 Complete Goal (RM{remainingAmount.toLocaleString()})
               </Button>
             </div>
+
+            {/* Balance Impact */}
+            {currentBalance !== undefined && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">Balance Impact:</span>
+                  <span className="text-blue-800 dark:text-blue-200 font-bold">
+                    RM{(currentBalance - formData.amount).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <span>Current Balance:</span>
+                  <span>RM{currentBalance.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400">
+                  <span>After Contribution:</span>
+                  <span>RM{(currentBalance - formData.amount).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Contribution Date */}

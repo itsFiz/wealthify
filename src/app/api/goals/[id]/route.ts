@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { createGoalSchema } from '@/lib/validations';
+import { updateGoalSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
@@ -140,7 +140,7 @@ export async function PUT(
 
     console.log('🔄 Processed goal update data:', processedBody);
 
-    const validatedData = createGoalSchema.parse(processedBody);
+    const validatedData = updateGoalSchema.parse(processedBody);
     console.log('✅ Validated goal update data:', validatedData);
 
     let imageUrl: string | undefined = existingGoal.imageUrl || undefined;
@@ -192,7 +192,7 @@ export async function PUT(
           ContentType: imageFile.type,
           Metadata: {
             userId: user.id,
-            goalName: validatedData.name,
+            goalName: validatedData.name || existingGoal.name,
             uploadedAt: new Date().toISOString(),
           }
         });
@@ -209,11 +209,19 @@ export async function PUT(
       }
     }
 
+    // Calculate if goal should be completed based on current amount vs target amount
+    // Use existing values if not provided in the update
+    const currentAmount = validatedData.currentAmount ?? Number(existingGoal.currentAmount);
+    const targetAmount = validatedData.targetAmount ?? Number(existingGoal.targetAmount);
+    const shouldBeCompleted = currentAmount >= targetAmount;
+
     const updatedGoal = await prisma.goal.update({
       where: { id: id },
       data: {
         ...validatedData,
         imageUrl: imageUrl,
+        // Ensure completion status is consistent with current amount
+        isCompleted: shouldBeCompleted,
       },
       include: {
         contributions: {
@@ -300,9 +308,11 @@ export async function DELETE(
     }
 
     // Delete goal (contributions are deleted automatically due to cascade)
+    console.log(`🗑️ Deleting goal ${id}...`);
     await prisma.goal.delete({
       where: { id: id },
     });
+    console.log(`✅ Goal ${id} deleted successfully`);
 
     return NextResponse.json({ message: 'Goal deleted successfully' });
   } catch (error) {

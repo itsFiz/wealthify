@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { updateExpenseSchema } from '@/lib/validations';
-import { deleteExpenseEntries, generateExpenseEntries } from '@/lib/utils/entryGeneration';
+import { deleteExpenseEntries, generateExpenseEntries, updateExpenseEntries } from '@/lib/utils/entryGeneration';
 import { z } from 'zod';
 
 // GET /api/expenses/[id] - Get specific expense
@@ -87,6 +87,20 @@ export async function PUT(
         id: id,
         userId: user.id,
       },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        userId: true,
+        category: true,
+        amount: true,
+        frequency: true,
+        incurredDate: true,
+        endDate: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!existingExpense) {
@@ -100,8 +114,8 @@ export async function PUT(
     console.log('✅ Validated expense data:', validatedData);
 
     // Prepare update data with proper date conversion
-    const { incurredDate: incurredDateString, ...restValidatedData } = validatedData;
-    const updateData: typeof restValidatedData & { incurredDate?: Date } = {
+    const { incurredDate: incurredDateString, endDate: endDateString, ...restValidatedData } = validatedData;
+    const updateData: typeof restValidatedData & { incurredDate?: Date; endDate?: Date } = {
       ...restValidatedData,
     };
 
@@ -109,6 +123,12 @@ export async function PUT(
     if (incurredDateString) {
       updateData.incurredDate = new Date(incurredDateString);
       console.log('📅 Converted incurredDate from string to Date:', updateData.incurredDate);
+    }
+
+    // Convert endDate string to Date object if provided
+    if (endDateString) {
+      updateData.endDate = new Date(endDateString);
+      console.log('📅 Converted endDate from string to Date:', updateData.endDate);
     }
 
     console.log('🔄 Final update data:', updateData);
@@ -126,31 +146,65 @@ export async function PUT(
 
     console.log('✅ Successfully updated expense:', updatedExpense.id);
 
-    // Check if incurredDate or amount changed and regenerate entries
+    // Check if incurredDate, endDate, or amount changed and regenerate entries
     const oldIncurredDate = existingExpense.incurredDate ? new Date(existingExpense.incurredDate) : null;
     const newIncurredDate = validatedData.incurredDate ? new Date(validatedData.incurredDate) : null;
     const incurredDateChanged = (oldIncurredDate?.getTime() !== newIncurredDate?.getTime());
     
-      const oldAmount = Number(existingExpense.amount);
+    const oldEndDate = existingExpense.endDate ? new Date(existingExpense.endDate) : null;
+    const newEndDate = validatedData.endDate ? new Date(validatedData.endDate) : null;
+    const endDateChanged = (oldEndDate?.getTime() !== newEndDate?.getTime());
+    
+    const oldAmount = Number(existingExpense.amount);
     const newAmount = validatedData.amount !== undefined ? Number(validatedData.amount) : oldAmount;
     const amountChanged = validatedData.amount !== undefined && (newAmount !== oldAmount);
 
-    if (incurredDateChanged || amountChanged) {
+    if (incurredDateChanged || endDateChanged || amountChanged) {
         try {
-        console.log('🔄 Regenerating entries due to changes:');
+        console.log('🔄 Handling entry changes:');
         console.log(`   - Incurred date changed: ${incurredDateChanged} (${oldIncurredDate?.toLocaleDateString() || 'null'} → ${newIncurredDate?.toLocaleDateString() || 'null'})`);
+        console.log(`   - End date changed: ${endDateChanged} (${oldEndDate?.toLocaleDateString() || 'null'} → ${newEndDate?.toLocaleDateString() || 'null'})`);
         console.log(`   - Amount changed: ${amountChanged} (RM${oldAmount} → RM${newAmount})`);
         
-        // Delete existing entries and regenerate from the new date
-        const deleteResult = await deleteExpenseEntries(id);
-        console.log(`🗑️ ${deleteResult.message}`);
-        
-        // Regenerate entries with new date/amount
-        const generateResult = await generateExpenseEntries(id);
-        console.log(`✅ ${generateResult.message}`);
+        if (incurredDateChanged) {
+          // If incurred date changed, we need to regenerate all entries
+          console.log('🔄 Incurred date changed - regenerating all entries');
+          const deleteResult = await deleteExpenseEntries(id);
+          console.log(`🗑️ ${deleteResult.message}`);
+          
+          const generateResult = await generateExpenseEntries(id);
+          console.log(`✅ ${generateResult.message}`);
+        } else if (endDateChanged) {
+          // If only end date changed, only delete future entries after the end date
+          console.log('🔄 End date changed - removing future entries only');
+          const endDate = validatedData.endDate ? new Date(validatedData.endDate) : null;
+          
+          if (endDate) {
+            // Delete entries after the end date (keep the end date month, delete from next month onwards)
+            const nextMonthAfterEnd = new Date(endDate);
+            nextMonthAfterEnd.setMonth(nextMonthAfterEnd.getMonth() + 1);
+            nextMonthAfterEnd.setDate(1); // Start of next month
+            
+            const deletedEntries = await prisma.expenseEntry.deleteMany({
+              where: {
+                expenseId: id,
+                month: {
+                  gte: nextMonthAfterEnd, // Delete from next month onwards
+                },
+              },
+            });
+            console.log(`🗑️ Deleted ${deletedEntries.count} entries from ${nextMonthAfterEnd.toLocaleDateString()} onwards (keeping ${endDate.toLocaleDateString()} entry)`);
+          }
+          // DO NOT regenerate entries when ending an expense - keep historical entries intact
+        } else if (amountChanged) {
+          // If only amount changed, update current and future entries
+          console.log('🔄 Amount changed - updating current and future entries');
+          const updateResult = await updateExpenseEntries(id, newAmount);
+          console.log(`✅ ${updateResult.message}`);
+        }
         } catch (entryError) {
-        console.error('❌ Failed to regenerate expense entries:', entryError);
-        // Don't fail the entire request if entry regeneration fails
+        console.error('❌ Failed to handle expense entry changes:', entryError);
+        // Don't fail the entire request if entry handling fails
       }
     }
 

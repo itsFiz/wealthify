@@ -211,6 +211,13 @@ export function calculateGoalProgress(goal: Goal): number {
 }
 
 /**
+ * Check if a goal should be marked as completed based on current amount vs target amount
+ */
+export function shouldGoalBeCompleted(goal: Goal): boolean {
+  return goal.currentAmount >= goal.targetAmount;
+}
+
+/**
  * Get color coding for burn rate
  */
 export function getBurnRateColor(burnRate: number): string {
@@ -947,6 +954,7 @@ export function calculateAccumulatedBalance(
   startingBalance: number,
   incomeStreams: IncomeStream[],
   expenses: Expense[],
+  goalContributions: Array<{ amount: number; month: Date }> = [],
   fromDate?: Date
 ): {
   currentCalculatedBalance: number;
@@ -954,15 +962,18 @@ export function calculateAccumulatedBalance(
     month: Date;
     monthlyIncome: number;
     monthlyExpenses: number;
+    monthlyGoalContributions: number;
     netFlow: number;
     runningBalance: number;
   }>;
   totalAccumulatedIncome: number;
   totalAccumulatedExpenses: number;
+  totalAccumulatedGoalContributions: number;
 } {
   const startDate = fromDate || new Date(Math.min(
     ...incomeStreams.map(s => new Date(s.earnedDate || s.createdAt).getTime()),
-    ...expenses.map(e => new Date(e.incurredDate || e.createdAt).getTime())
+    ...expenses.map(e => new Date(e.incurredDate || e.createdAt).getTime()),
+    ...goalContributions.map(gc => new Date(gc.month).getTime())
   ));
   
   const currentDate = new Date();
@@ -970,6 +981,7 @@ export function calculateAccumulatedBalance(
   let runningBalance = startingBalance;
   let totalAccumulatedIncome = 0;
   let totalAccumulatedExpenses = 0;
+  let totalAccumulatedGoalContributions = 0;
   
   // Generate monthly calculations from start date to current date
   const current = new Date(startDate);
@@ -978,13 +990,23 @@ export function calculateAccumulatedBalance(
   while (current <= currentDate) {
     let monthlyIncome = 0;
     let monthlyExpenses = 0;
+    let monthlyGoalContributions = 0;
     
     // Calculate income for this month
     incomeStreams.forEach(stream => {
       const streamStartDate = new Date(stream.earnedDate || stream.createdAt);
+      const streamEndDate = stream.endDate ? new Date(stream.endDate) : null;
       
-      // Only include if stream was active in this month
-      if (streamStartDate <= current && stream.isActive) {
+      // Only include if stream was active in this month and hasn't ended
+      // For ended streams, we include them up to and including the end date month
+      const isActiveInThisMonth = streamStartDate <= current && 
+                                 stream.isActive && 
+                                 (!streamEndDate || 
+                                  (current.getFullYear() < streamEndDate.getFullYear()) ||
+                                  (current.getFullYear() === streamEndDate.getFullYear() && 
+                                   current.getMonth() <= streamEndDate.getMonth()));
+      
+      if (isActiveInThisMonth) {
         const amount = Number(stream.actualMonthly || stream.expectedMonthly);
         
         switch (stream.frequency) {
@@ -1011,9 +1033,18 @@ export function calculateAccumulatedBalance(
     // Calculate expenses for this month
     expenses.forEach(expense => {
       const expenseStartDate = new Date(expense.incurredDate || expense.createdAt);
+      const expenseEndDate = expense.endDate ? new Date(expense.endDate) : null;
       
-      // Only include if expense was active in this month
-      if (expenseStartDate <= current && expense.isActive) {
+      // Only include if expense was active in this month and hasn't ended
+      // For ended expenses, we include them up to and including the end date month
+      const isActiveInThisMonth = expenseStartDate <= current && 
+                                 expense.isActive && 
+                                 (!expenseEndDate || 
+                                  (current.getFullYear() < expenseEndDate.getFullYear()) ||
+                                  (current.getFullYear() === expenseEndDate.getFullYear() && 
+                                   current.getMonth() <= expenseEndDate.getMonth()));
+      
+      if (isActiveInThisMonth) {
         const amount = Number(expense.amount);
         
         switch (expense.frequency) {
@@ -1036,17 +1067,28 @@ export function calculateAccumulatedBalance(
         }
       }
     });
+
+    // Calculate goal contributions for this month
+    goalContributions.forEach(contribution => {
+      const contributionMonth = new Date(contribution.month);
+      if (contributionMonth.getMonth() === current.getMonth() && 
+          contributionMonth.getFullYear() === current.getFullYear()) {
+        monthlyGoalContributions += contribution.amount;
+      }
+    });
     
-    const netFlow = monthlyIncome - monthlyExpenses;
+    const netFlow = monthlyIncome - monthlyExpenses - monthlyGoalContributions;
     runningBalance += netFlow;
     
     totalAccumulatedIncome += monthlyIncome;
     totalAccumulatedExpenses += monthlyExpenses;
+    totalAccumulatedGoalContributions += monthlyGoalContributions;
     
     monthlyBreakdown.push({
       month: new Date(current),
       monthlyIncome,
       monthlyExpenses,
+      monthlyGoalContributions,
       netFlow,
       runningBalance,
     });
@@ -1060,5 +1102,6 @@ export function calculateAccumulatedBalance(
     monthlyBreakdown,
     totalAccumulatedIncome,
     totalAccumulatedExpenses,
+    totalAccumulatedGoalContributions,
   };
 } 

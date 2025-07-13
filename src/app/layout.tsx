@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { MobileDock } from "@/components/MobileDock";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -128,21 +129,67 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <ThemeProvider defaultTheme="dark" storageKey="wealthify-ui-theme">
           <SessionProvider>
             <div className="flex h-full">
-              {/* Sidebar - always show on desktop, hidden on mobile */}
-              <div className="hidden lg:block lg:flex-shrink-0">
-                <Sidebar />
-              </div>
+              {/* Sidebar - conditionally rendered */}
+              <Sidebar />
               
               {/* Main content */}
-              <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
+              <div className="flex-1 flex flex-col min-h-0">
                 <main className="flex-1 overflow-auto">
                   {children}
                 </main>
               </div>
             </div>
             
-            {/* Mobile Dock - only show on mobile */}
+            {/* Mobile Dock - conditionally rendered */}
             <MobileDock />
+            
+            {/* Toast notifications */}
+            <Toaster 
+              position="top-center"
+              containerStyle={{
+                zIndex: 9999,
+                top: 20,
+              }}
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'hsl(var(--card))',
+                  color: 'hsl(var(--card-foreground))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  zIndex: 9999,
+                  backdropFilter: 'blur(10px)',
+                },
+                success: {
+                  duration: 3000,
+                  style: {
+                    background: 'hsl(142.1 76.2% 36.3%)',
+                    color: 'hsl(355.7 100% 97.3%)',
+                    border: '1px solid hsl(142.1 70.6% 45.3%)',
+                  },
+                  iconTheme: {
+                    primary: '#ffffff',
+                    secondary: '#10b981',
+                  },
+                },
+                error: {
+                  duration: 5000,
+                  style: {
+                    background: 'hsl(0 84.2% 60.2%)',
+                    color: 'hsl(355.7 100% 97.3%)',
+                    border: '1px solid hsl(0 72.2% 50.6%)',
+                  },
+                  iconTheme: {
+                    primary: '#ffffff',
+                    secondary: '#ef4444',
+                  },
+                },
+              }}
+            />
           </SessionProvider>
         </ThemeProvider>
       </body>

@@ -18,7 +18,7 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/hooks/usePWA';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { formatCurrency, formatPercentage, calculateAccumulatedBalance } from '@/lib/calculations/index';
+import { formatCurrency, formatPercentage } from '@/lib/calculations/index';
 import toast from 'react-hot-toast';
 import { 
   Wallet, 
@@ -448,6 +448,9 @@ export default function Dashboard() {
   // Contribution deletion state
   const [isDeletingContribution, setIsDeletingContribution] = useState<string>('');
 
+  // Goal contributions for balance calculation
+  // const [goalContributions, setGoalContributions] = useState<Array<{ amount: number; month: Date }>>([]);
+
   // Enhanced fetch function with individual loading states
   const fetchUserData = useCallback(async () => {
     if (!user?.id) return;
@@ -455,18 +458,27 @@ export default function Dashboard() {
     setIsRefreshingData(true);
 
     try {
-      // Fetch user balance (starting balance only)
+      // Fetch user balance (now includes calculated current balance)
       setLoadingStates(prev => ({ ...prev, balance: true }));
       const balanceResponse = await fetch('/api/balance');
       let fetchedStartingBalance = 0;
+      let fetchedCurrentBalance = 0;
       if (balanceResponse.ok) {
-        const balanceData: BalanceResponse = await balanceResponse.json();
+        const balanceData = await balanceResponse.json();
         fetchedStartingBalance = balanceData.startingBalance || 0;
+        fetchedCurrentBalance = balanceData.currentBalance || 0;
         setStartingBalance(fetchedStartingBalance);
+        setCurrentBalance(fetchedCurrentBalance);
+        setStoreCurrentBalance(fetchedCurrentBalance);
         console.log('💰 Starting balance fetched:', fetchedStartingBalance);
+        console.log('💰 Current balance fetched:', fetchedCurrentBalance);
+        console.log('💰 Database balance:', balanceData.databaseBalance);
+        console.log('💰 Calculated balance:', balanceData.calculatedBalance);
       } else {
         console.log('⚠️ Balance fetch failed:', balanceResponse.status, await balanceResponse.text());
         setStartingBalance(0);
+        setCurrentBalance(0);
+        setStoreCurrentBalance(0);
       }
       setLoadingStates(prev => ({ ...prev, balance: false }));
 
@@ -484,6 +496,7 @@ export default function Dashboard() {
           type: stream.type as IncomeType, // Convert string to enum
           frequency: stream.frequency as Frequency, // Convert string to enum
           earnedDate: stream.earnedDate ? new Date(stream.earnedDate) : undefined,
+          endDate: stream.endDate ? new Date(stream.endDate) : undefined,
           createdAt: new Date(stream.createdAt),
           updatedAt: new Date(stream.updatedAt),
         }));
@@ -505,6 +518,7 @@ export default function Dashboard() {
           type: expense.type as ExpenseType, // Convert string to enum
           frequency: Frequency.MONTHLY, // Default to monthly for existing expenses
           incurredDate: expense.incurredDate ? new Date(expense.incurredDate) : undefined,
+          endDate: expense.endDate ? new Date(expense.endDate) : undefined,
           createdAt: new Date(expense.createdAt),
           updatedAt: new Date(expense.updatedAt),
         }));
@@ -532,6 +546,24 @@ export default function Dashboard() {
           downPaymentRatio: goal.downPaymentRatio ? Number(goal.downPaymentRatio) : undefined,
         }));
         setGoals(processedGoals);
+
+        // Fetch goal contributions for balance calculation
+        const allContributions: Array<{ amount: number; month: Date }> = [];
+        for (const goal of processedGoals) {
+          try {
+            const contributionsResponse = await fetch(`/api/goals/${goal.id}/contributions`);
+            if (contributionsResponse.ok) {
+              const contributions = await contributionsResponse.json();
+              allContributions.push(...contributions.map((contrib: { amount: string | number; month: string }) => ({
+                amount: Number(contrib.amount),
+                month: new Date(contrib.month),
+              })));
+            }
+          } catch (error) {
+            console.error(`Error fetching contributions for goal ${goal.id}:`, error);
+          }
+        }
+        // setGoalContributions(allContributions);
       }
       setLoadingStates(prev => ({ ...prev, goals: false }));
 
@@ -540,19 +572,8 @@ export default function Dashboard() {
       await fetchCurrentSnapshot();
       setLoadingStates(prev => ({ ...prev, snapshots: false }));
 
-      // Calculate balance with fetched data
-      if (processedIncome.length > 0 || processedExpenses.length > 0) {
-        const balanceCalculation = calculateAccumulatedBalance(
-          fetchedStartingBalance,
-          processedIncome,
-          processedExpenses
-        );
-        setCurrentBalance(balanceCalculation.currentCalculatedBalance);
-        setStoreCurrentBalance(balanceCalculation.currentCalculatedBalance);
-      } else {
-        setCurrentBalance(fetchedStartingBalance);
-        setStoreCurrentBalance(fetchedStartingBalance);
-      }
+      // Balance is now calculated on the backend and fetched above
+      // No need to recalculate here since we get the calculated balance from the API
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
@@ -565,7 +586,7 @@ export default function Dashboard() {
         snapshots: false,
       });
     }
-  }, [user?.id, setIncomeStreams, setExpenses, setGoals, setStartingBalance, setCurrentBalance, setStoreCurrentBalance]);
+  }, [setIncomeStreams, setExpenses, setGoals, setStartingBalance, setCurrentBalance, setStoreCurrentBalance, user]);
 
   // Fetch current month snapshot for trend data
   const fetchCurrentSnapshot = async () => {
@@ -910,6 +931,7 @@ export default function Dashboard() {
           expectedMonthly: Number(newIncomeStream.expectedMonthly),
           actualMonthly: Number(newIncomeStream.actualMonthly || newIncomeStream.expectedMonthly),
           earnedDate: newIncomeStream.earnedDate ? new Date(newIncomeStream.earnedDate) : undefined,
+          endDate: newIncomeStream.endDate ? new Date(newIncomeStream.endDate) : undefined,
           createdAt: new Date(newIncomeStream.createdAt),
           updatedAt: new Date(newIncomeStream.updatedAt),
         };
@@ -956,6 +978,7 @@ export default function Dashboard() {
           expectedMonthly: Number(updatedIncomeStream.expectedMonthly),
           actualMonthly: Number(updatedIncomeStream.actualMonthly || updatedIncomeStream.expectedMonthly),
           earnedDate: updatedIncomeStream.earnedDate ? new Date(updatedIncomeStream.earnedDate) : undefined,
+          endDate: updatedIncomeStream.endDate ? new Date(updatedIncomeStream.endDate) : undefined,
           createdAt: new Date(updatedIncomeStream.createdAt),
           updatedAt: new Date(updatedIncomeStream.updatedAt),
         };
@@ -1084,6 +1107,7 @@ export default function Dashboard() {
           type: newExpense.type as ExpenseType,
           frequency: Frequency.MONTHLY, // Default to monthly
           incurredDate: newExpense.incurredDate ? new Date(newExpense.incurredDate) : undefined,
+          endDate: newExpense.endDate ? new Date(newExpense.endDate) : undefined,
           createdAt: new Date(newExpense.createdAt),
           updatedAt: new Date(newExpense.updatedAt),
         };
@@ -1130,6 +1154,7 @@ export default function Dashboard() {
           type: updatedExpense.type as ExpenseType,
           frequency: Frequency.MONTHLY, // Default to monthly
           incurredDate: updatedExpense.incurredDate ? new Date(updatedExpense.incurredDate) : undefined,
+          endDate: updatedExpense.endDate ? new Date(updatedExpense.endDate) : undefined,
           createdAt: new Date(updatedExpense.createdAt),
           updatedAt: new Date(updatedExpense.updatedAt),
         };
@@ -1174,31 +1199,41 @@ export default function Dashboard() {
 
   // End expense (set end date to today)
   const handleEndExpense = async (expenseId: string, expenseName: string) => {
-    const confirmEnd = confirm(`Are you sure you want to end "${expenseName}"? This will stop generating new entries after today.`);
-    if (!confirmEnd) return;
-
     try {
+      console.log(`🔄 Ending expense: ${expenseName} (ID: ${expenseId})`);
+      
       const response = await fetch(`/api/expenses/${expenseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          isActive: false,
           endDate: new Date().toISOString(),
+          // Keep isActive: true so historical entries remain in balance calculations
         }),
       });
 
+      console.log(`📡 Response status: ${response.status}`);
+
       if (response.ok) {
         const updatedExpense = await response.json();
+        console.log(`✅ Expense updated successfully:`, updatedExpense);
+        
+        // Update the expense in the local state
         updateExpense(expenseId, updatedExpense);
+        
+        // Refresh the balance calculation
+        await fetchUserData();
+        
         toast.success(`💸 Expense "${expenseName}" ended successfully!`);
       } else {
         const errorData = await response.json();
+        console.error(`❌ API Error:`, errorData);
         toast.error(`Failed to end expense: ${errorData.error || 'Unknown error'}`);
         throw new Error('Failed to end expense');
       }
     } catch (error) {
       console.error('Error ending expense:', error);
       toast.error('Failed to end expense. Please try again.');
+      throw error; // Re-throw so the action confirmation modal can handle it
     }
   };
 
@@ -1232,7 +1267,7 @@ export default function Dashboard() {
   };
 
   // Contribution CRUD operations
-  const handleCreateContribution = async (formData: { amount: number; date?: string; notes?: string }) => {
+  const handleCreateContribution = async (formData: { amount: number; month: Date; notes?: string }) => {
     if (!contributionModal.goal) return;
     
     setContributionModal(prev => ({ ...prev, isSubmitting: true }));
@@ -1244,19 +1279,33 @@ export default function Dashboard() {
         body: JSON.stringify(formData),
       });
 
+      console.log('🔍 Response status:', response.status);
+      console.log('🔍 Response ok:', response.ok);
+      console.log('🔍 Response status text:', response.statusText);
+
       if (response.ok) {
-        const { contribution, goal: updatedGoal } = await response.json();
+        const { contribution, goal: updatedGoal, newBalance } = await response.json();
         
         // Update the goal in the store with the new data
         updateGoal(contributionModal.goal.id, updatedGoal);
         
-        // Show success toast
+        // Update current balance to reflect the deduction
+        setCurrentBalance(newBalance);
+        setStoreCurrentBalance(newBalance);
+        
+        // Add the contribution to our local state for balance calculations
+        // setGoalContributions(prev => [...prev, {
+        //   amount: contribution.amount,
+        //   month: new Date(contribution.month),
+        // }]);
+        
+        // Show success toast with balance impact
         if (updatedGoal.isCompleted) {
           toast.success(`🎉 Congratulations! Goal "${updatedGoal.name}" is now complete!`, {
             duration: 8000,
           });
         } else {
-          toast.success(`💰 Contribution of ${formatCurrency(contribution.amount)} added successfully!`, {
+          toast.success(`💰 Contribution of ${formatCurrency(contribution.amount)} added successfully! Balance: ${formatCurrency(newBalance)}`, {
             duration: 5000,
           });
         }
@@ -1264,11 +1313,25 @@ export default function Dashboard() {
         setContributionModal({ isOpen: false, goal: undefined, isSubmitting: false });
       } else {
         const errorData = await response.json();
-        toast.error(`Failed to add contribution: ${errorData.error || 'Unknown error'}`);
+        console.log('🔍 API Error Response:', errorData);
+        console.log('🔍 Error type:', errorData.error);
+        console.log('🔍 Error details:', errorData.details);
+        
+        if (errorData.error === 'Insufficient balance') {
+          const message = `Insufficient balance. You need ${formatCurrency(errorData.details.shortfall)} more to make this contribution.`;
+          console.log('🔍 Showing insufficient balance message:', message);
+          toast.error(message);
+        } else {
+          const message = `Failed to add contribution: ${errorData.error || 'Unknown error'}`;
+          console.log('🔍 Showing generic error message:', message);
+          toast.error(message);
+        }
         throw new Error('Failed to add contribution');
       }
     } catch (error) {
-      console.error('Error adding contribution:', error);
+      console.error('🔍 Caught error in catch block:', error);
+      console.error('🔍 Error type:', typeof error);
+      console.error('🔍 Error message:', error instanceof Error ? error.message : 'Unknown error');
       toast.error('Failed to add contribution. Please try again.');
       setContributionModal(prev => ({ ...prev, isSubmitting: false }));
     }
@@ -1285,7 +1348,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        const { contribution, goal: updatedGoal } = await response.json();
+        const { contribution, goal: updatedGoal, newBalance } = await response.json();
         
         console.log('🗑️ Contribution deleted successfully:', {
           deletedContribution: contribution,
@@ -1314,12 +1377,22 @@ export default function Dashboard() {
         // Update the goal in the store
         updateGoal(goalDetailsModal.goal.id, processedGoal);
         
+        // Update current balance to reflect the addition back
+        setCurrentBalance(newBalance);
+        setStoreCurrentBalance(newBalance);
+        
+        // Remove the contribution from our local state for balance calculations
+        // setGoalContributions(prev => prev.filter(contrib => 
+        //   !(contrib.amount === contribution.amount && 
+        //     contrib.month.getTime() === new Date(contribution.month).getTime())
+        // ));
+        
         // Update the goal details modal with the updated goal to keep it in sync
         setGoalDetailsModal(prev => ({ ...prev, goal: processedGoal }));
         
         console.log('✅ Goal updated in store and modal state');
         
-        toast.success(`🗑️ Contribution of ${formatCurrency(contribution.amount)} deleted successfully`);
+        toast.success(`🗑️ Contribution of ${formatCurrency(contribution.amount)} deleted successfully! Balance: ${formatCurrency(newBalance)}`);
       } else {
         const errorData = await response.json();
         console.error('❌ API error response:', errorData);
@@ -1945,10 +2018,10 @@ export default function Dashboard() {
               ) : (
                 <>
                   <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
-                    {incomeStreams.filter(s => s.isActive).length} Income Sources
+                    {incomeStreams.filter(s => s.isActive && !s.endDate).length} Income Sources
                   </Badge>
                   <Badge className="bg-red-500/20 text-red-700 border-red-500/30">
-                    {expenses.filter(e => e.isActive).length} Expenses
+                    {expenses.filter(e => e.isActive && !e.endDate).length} Expenses
                   </Badge>
                 </>
               )}
@@ -1998,12 +2071,15 @@ export default function Dashboard() {
                           <div key={stream.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stream.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stream.isActive && !stream.endDate ? 'bg-green-500' : 'bg-gray-400'}`} />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center space-x-2">
                                     <span className="text-sm font-medium truncate">{stream.name}</span>
                                     {!stream.isActive && (
                                       <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
+                                    )}
+                                    {stream.endDate && (
+                                      <Badge variant="outline" className="text-xs flex-shrink-0 text-yellow-600 border-yellow-600">Ended</Badge>
                                     )}
                                   </div>
                                   <div className="text-xs text-muted-foreground">{stream.type} • {stream.frequency}</div>
@@ -2119,12 +2195,15 @@ export default function Dashboard() {
                           <div key={expense.id} className="group border rounded-lg p-3 hover:bg-muted/50 transition-colors">
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${expense.isActive ? 'bg-red-500' : 'bg-gray-400'}`} />
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${expense.isActive && !expense.endDate ? 'bg-red-500' : 'bg-gray-400'}`} />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center space-x-2">
                                     <span className="text-sm font-medium truncate">{expense.name}</span>
                                     {!expense.isActive && (
                                       <Badge variant="secondary" className="text-xs flex-shrink-0">Inactive</Badge>
+                                    )}
+                                    {expense.endDate && (
+                                      <Badge variant="outline" className="text-xs flex-shrink-0 text-yellow-600 border-yellow-600">Ended</Badge>
                                     )}
                                   </div>
                                   <div className="text-xs text-muted-foreground">{expense.category} • {expense.type}</div>
@@ -2512,13 +2591,14 @@ export default function Dashboard() {
       />
 
       {/* Contribution Modal */}
-      <ContributionModal
-        isOpen={contributionModal.isOpen}
-        onClose={closeContributionModal}
-        goal={contributionModal.goal}
-        onSubmit={handleCreateContribution}
-        isSubmitting={contributionModal.isSubmitting}
-      />
+              <ContributionModal
+          isOpen={contributionModal.isOpen}
+          onClose={closeContributionModal}
+          goal={contributionModal.goal}
+          currentBalance={currentBalance}
+          onSubmit={handleCreateContribution}
+          isSubmitting={contributionModal.isSubmitting}
+        />
 
       {/* Goal Details Modal */}
       <GoalDetailsModal
@@ -2539,6 +2619,10 @@ export default function Dashboard() {
         }}
         onDeleteContribution={handleDeleteContribution}
         isDeletingContribution={isDeletingContribution}
+        monthlyIncome={monthlyIncome}
+        monthlyExpenses={monthlyExpenses}
+        incomeStreams={incomeStreams}
+        expenses={expenses}
       />
 
       {/* Delete Confirmation Modal */}

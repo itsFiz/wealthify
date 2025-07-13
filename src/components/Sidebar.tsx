@@ -127,8 +127,8 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
-  // Don't show sidebar on auth pages
-  if (pathname.startsWith('/auth')) {
+  // Don't show sidebar on auth pages or landing page
+  if (pathname.startsWith('/auth') || pathname === '/') {
     return null;
   }
 
@@ -163,7 +163,8 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   return (
-    <div className={cn('flex h-full w-64 flex-col sidebar-glass', className)}>
+    <div className={cn('hidden lg:block lg:flex-shrink-0', className)}>
+      <div className="flex h-full w-64 flex-col sidebar-glass">
       {/* Header */}
       <div className="flex h-16 items-center px-6 border-b border-white/10">
         <Link href="/dashboard" className="flex items-center space-x-2">
@@ -300,6 +301,7 @@ export function Sidebar({ className }: SidebarProps) {
             Sign Out
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

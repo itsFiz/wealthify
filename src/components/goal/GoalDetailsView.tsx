@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MilestoneProgress } from '@/components/ui/animated-progress';
 import { GoalContributionsList } from '@/components/goals/GoalContributionsList';
+import { GoalAIAnalysis } from '@/components/goal/GoalAIAnalysis';
 import { cn } from '@/lib/utils';
 import { calculateGoalProgress, formatCurrency } from '@/lib/calculations/index';
-import type { Goal } from '@/types';
+import type { Goal, IncomeStream, Expense } from '@/types';
 import { GOAL_CATEGORY_CONFIGS } from '@/types';
 import { 
   Target, 
@@ -40,6 +41,11 @@ interface GoalDetailsViewProps {
   onDeleteContribution?: (contributionId: string) => Promise<void>;
   isDeletingContribution?: string;
   className?: string;
+  // AI Analysis props
+  monthlyIncome?: number;
+  monthlyExpenses?: number;
+  incomeStreams?: IncomeStream[];
+  expenses?: Expense[];
 }
 
 // Icon mapping for dynamic icon rendering
@@ -63,6 +69,10 @@ export function GoalDetailsView({
   onDeleteContribution,
   isDeletingContribution,
   className,
+  monthlyIncome = 0,
+  monthlyExpenses = 0,
+  incomeStreams = [],
+  expenses = [],
 }: GoalDetailsViewProps) {
   const progress = calculateGoalProgress(goal);
   const remainingAmount = goal.targetAmount - goal.currentAmount;
@@ -325,6 +335,17 @@ export function GoalDetailsView({
             </Card>
           </div>
         </div>
+
+        {/* AI-Powered Analysis */}
+        {monthlyIncome > 0 && monthlyExpenses > 0 && (
+          <GoalAIAnalysis
+            goal={goal}
+            monthlyIncome={monthlyIncome}
+            monthlyExpenses={monthlyExpenses}
+            incomeStreams={incomeStreams}
+            expenses={expenses}
+          />
+        )}
 
         {/* Contribution History */}
         <div className="space-y-6">

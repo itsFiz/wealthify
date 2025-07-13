@@ -105,8 +105,8 @@ export function MobileDock({ className }: MobileDockProps) {
   const { data: session, status } = useSession();
   const [showMore, setShowMore] = useState(false);
 
-  // Don't show dock on auth pages
-  if (pathname.startsWith('/auth')) {
+  // Don't show dock on auth pages or landing page
+  if (pathname.startsWith('/auth') || pathname === '/') {
     return null;
   }
 

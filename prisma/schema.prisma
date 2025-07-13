@@ -103,6 +103,7 @@ model IncomeStream {
   actualMonthly   Decimal?
   frequency   Frequency @default(MONTHLY)
   earnedDate  DateTime?
+  endDate     DateTime? // Date when income stream was ended
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -136,6 +137,7 @@ model Expense {
   amount      Decimal
   frequency   Frequency // MONTHLY, WEEKLY, ONE_TIME
   incurredDate DateTime? // Date when expense was incurred/paid
+  endDate     DateTime? // Date when expense was ended
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -251,7 +253,7 @@ model GoalContribution {
   notes     String?
   createdAt DateTime @default(now())
   
-  goal      Goal     @relation(fields: [goalId], references: [id])
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
   
   @@map("goal_contributions")
 }

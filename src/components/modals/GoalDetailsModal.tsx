@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoalDetailsView } from '@/components/goal/GoalDetailsView';
-import type { Goal } from '@/types';
+import type { Goal, IncomeStream, Expense } from '@/types';
 
 interface GoalDetailsModalProps {
   isOpen: boolean;
@@ -10,6 +10,11 @@ interface GoalDetailsModalProps {
   onEdit?: () => void;
   onDeleteContribution?: (contributionId: string) => Promise<void>;
   isDeletingContribution?: string;
+  // AI Analysis props
+  monthlyIncome?: number;
+  monthlyExpenses?: number;
+  incomeStreams?: IncomeStream[];
+  expenses?: Expense[];
 }
 
 export function GoalDetailsModal({
@@ -20,6 +25,10 @@ export function GoalDetailsModal({
   onEdit,
   onDeleteContribution,
   isDeletingContribution,
+  monthlyIncome = 0,
+  monthlyExpenses = 0,
+  incomeStreams = [],
+  expenses = [],
 }: GoalDetailsModalProps) {
   if (!isOpen || !goal) return null;
 
@@ -44,6 +53,10 @@ export function GoalDetailsModal({
           onClose={onClose}
           onDeleteContribution={onDeleteContribution}
           isDeletingContribution={isDeletingContribution}
+          monthlyIncome={monthlyIncome}
+          monthlyExpenses={monthlyExpenses}
+          incomeStreams={incomeStreams}
+          expenses={expenses}
         />
       </div>
     </div>

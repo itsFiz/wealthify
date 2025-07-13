@@ -12,6 +12,7 @@ interface ContributionModalProps {
   isOpen: boolean;
   onClose: () => void;
   goal?: Goal;
+  currentBalance?: number;
   onSubmit: (data: ContributionFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
@@ -20,6 +21,7 @@ export function ContributionModal({
   isOpen,
   onClose,
   goal,
+  currentBalance,
   onSubmit,
   isSubmitting = false,
 }: ContributionModalProps) {
@@ -41,6 +43,7 @@ export function ContributionModal({
       >
         <ContributionForm
           goal={goal}
+          currentBalance={currentBalance}
           onSubmit={onSubmit}
           onCancel={onClose}
           isSubmitting={isSubmitting}

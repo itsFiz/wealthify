@@ -34,6 +34,13 @@ export const createIncomeStreamSchema = z.object({
 
 export const updateIncomeStreamSchema = createIncomeStreamSchema.partial().extend({
   isActive: z.boolean().optional(),
+  endDate: z.string().refine((date) => {
+    if (!date) return true; // Allow empty date
+    const parsedDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return parsedDate <= today;
+  }, 'End date cannot be in the future').optional(),
 });
 
 export const incomeEntrySchema = z.object({
@@ -64,6 +71,13 @@ export const createExpenseSchema = z.object({
 
 export const updateExpenseSchema = createExpenseSchema.partial().extend({
   isActive: z.boolean().optional(),
+  endDate: z.string().refine((date) => {
+    if (!date) return true; // Allow empty date
+    const parsedDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return parsedDate <= today;
+  }, 'End date cannot be in the future').optional(),
 });
 
 export const expenseEntrySchema = z.object({
@@ -95,7 +109,6 @@ export const updateGoalSchema = createGoalSchema.partial().extend({
 });
 
 export const goalContributionSchema = z.object({
-  goalId: z.string().cuid('Invalid goal ID'),
   amount: positiveNumber,
   month: z.date().refine(
     (date) => date <= new Date(),

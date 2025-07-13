@@ -8,8 +8,8 @@ const urlsToCache = [
   '/simulator',
   '/profile',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/wealthify.png',
+  '/wealthifylogo.png',
 ];
 
 // Install event - cache resources
@@ -18,7 +18,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // Cache each URL individually to handle failures gracefully
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(error => {
+              console.warn(`Failed to cache ${url}:`, error);
+              return null;
+            })
+          )
+        );
       })
   );
 });
@@ -61,8 +69,8 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New notification from Wealthify',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/wealthifylogo.png',
+    badge: '/wealthifylogo.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -72,12 +80,12 @@ self.addEventListener('push', (event) => {
       {
         action: 'explore',
         title: 'View Dashboard',
-        icon: '/icons/icon-72x72.png'
+        icon: '/wealthifylogo.png'
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/icons/icon-72x72.png'
+        icon: '/wealthifylogo.png'
       }
     ]
   };

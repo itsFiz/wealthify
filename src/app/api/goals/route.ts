@@ -48,8 +48,33 @@ export async function GET() {
       ],
     });
 
+    // Fix any inconsistencies in completion status
+    const updatedGoals = await Promise.all(
+      goals.map(async (goal) => {
+        const currentAmount = Number(goal.currentAmount);
+        const targetAmount = Number(goal.targetAmount);
+        const shouldBeCompleted = currentAmount >= targetAmount;
+        
+        // Update completion status if it's inconsistent
+        if (goal.isCompleted !== shouldBeCompleted) {
+          const updatedGoal = await prisma.goal.update({
+            where: { id: goal.id },
+            data: { isCompleted: shouldBeCompleted },
+            include: {
+              contributions: {
+                orderBy: { month: 'desc' },
+                take: 12,
+              },
+            },
+          });
+          return updatedGoal;
+        }
+        return goal;
+      })
+    );
+
     // Convert Decimal fields to numbers for JSON serialization
-    const goalsWithNumbers = goals.map(goal => ({
+    const goalsWithNumbers = updatedGoals.map(goal => ({
       ...goal,
       targetAmount: Number(goal.targetAmount),
       currentAmount: Number(goal.currentAmount),

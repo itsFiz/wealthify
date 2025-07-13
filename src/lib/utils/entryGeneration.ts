@@ -75,6 +75,13 @@ export async function generateIncomeEntries(incomeStreamId: string): Promise<Gen
     const startDate = earnedDate || createdAt;
     const currentDate = new Date();
     
+    // If income stream has an end date, use it as the end point for entry generation
+    const endDate = incomeStream.endDate ? new Date(incomeStream.endDate) : currentDate;
+    // For end dates, we want to include the end date month itself, so we go to the end of that month
+    const effectiveEndDate = incomeStream.endDate ? 
+      new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0) : // Last day of end date month
+      currentDate;
+    
     console.log(`📊 Income Stream Details:`, {
       id: incomeStream.id,
       name: incomeStream.name,
@@ -94,8 +101,8 @@ export async function generateIncomeEntries(incomeStreamId: string): Promise<Gen
       usingEarnedDate: !!earnedDate,
     });
     
-    // Generate all months from start date to current month
-    const monthsToGenerate = generateMonthsBetween(startDate, currentDate);
+    // Generate all months from start date to effective end date
+    const monthsToGenerate = generateMonthsBetween(startDate, effectiveEndDate);
     
     console.log(`📅 Months to generate (${monthsToGenerate.length}):`, 
       monthsToGenerate.map(m => m.toLocaleDateString('en-MY', { month: 'long', year: 'numeric' }))
@@ -198,10 +205,17 @@ export async function generateExpenseEntries(expenseId: string): Promise<Generat
     const startDate = new Date(expense.incurredDate || expense.createdAt);
     const currentDate = new Date();
     
-    console.log(`📅 Generating expense entries for ${expense.name} from ${startDate.toLocaleDateString()} to ${currentDate.toLocaleDateString()}`);
+    // If expense has an end date, use it as the end point for entry generation
+    const endDate = expense.endDate ? new Date(expense.endDate) : currentDate;
+    // For end dates, we want to include the end date month itself, so we go to the end of that month
+    const effectiveEndDate = expense.endDate ? 
+      new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0) : // Last day of end date month
+      currentDate;
     
-    // Generate all months from start date to current month
-    const monthsToGenerate = generateMonthsBetween(startDate, currentDate);
+    console.log(`📅 Generating expense entries for ${expense.name} from ${startDate.toLocaleDateString()} to ${effectiveEndDate.toLocaleDateString()}`);
+    
+    // Generate all months from start date to effective end date
+    const monthsToGenerate = generateMonthsBetween(startDate, effectiveEndDate);
     
     let generatedCount = 0;
     
